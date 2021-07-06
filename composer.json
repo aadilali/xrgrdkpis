@@ -1,0 +1,20 @@
+{
+    "name": "xperiencerg/xrg-rd-kpis",
+    "description": "Plugin to add the functionality for GMs to enter weekly forecast data into excel sheet.",
+    "type": "wordpress-plugin",
+    "autoload": {
+        "psr-4": {
+            "XRG\\RD\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Adil Ali",
+            "email": "adil.rmopco@presstigers.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "phpoffice/phpspreadsheet": "^1.18"
+    }
+}
