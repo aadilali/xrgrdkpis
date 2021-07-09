@@ -12,7 +12,6 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
-
 /**
  * Class XrgKpisReadSheet
  *
@@ -107,14 +106,15 @@ class XrgKpisReadSheet
      *
      * @since    0.1
      * @access   public
-     * @param   array $pObj array with submitted form data
+     * @param   string $regionName Region name against a spreadsheet will be generated
      * @return    void
      */
-    public function xrgWriteFormData(array $pObj): void
+    public function xrgGenerateSpreadSheet(string $regionName): void
     {
-       
+        // Get data from DB class
+        $sheetObjs = XrgRdKpis::instance()->xrgDBInstance()->xrgGetRegionalData( $regionName );
+        
         $spreadsheet = new Spreadsheet();
-        $currentSheet = new Worksheet($spreadsheet, $pObj['xrg_period']);
 
         // Generic Style Array
         $genericStyle = [
@@ -133,119 +133,138 @@ class XrgKpisReadSheet
         // Remove Default Worksheet from file
         $spreadsheet->removeSheetByIndex(0);
 
-        if($pObj['xrg_period'] === 'Period 1') {
-            $spreadsheet->addSheet($currentSheet, 0);
-        } else {
-            $spreadsheet->addSheet($currentSheet);
+        foreach($sheetObjs as $sheetObj) {
+            // cell's data
+            $cellIndex = 1;
+            $contentStartIndex = 3;
+            
+            $weeklyKpisData = unserialize($sheetObj->weekly_kpis_data);
+
+            $currentSheet = new Worksheet($spreadsheet, $sheetObj->period_name);
+            if($sheetObj->period_name === 'Period 1') {
+                $spreadsheet->addSheet($currentSheet, 0);
+            } else {
+                $spreadsheet->addSheet($currentSheet);
+            }
+
+            // Create Sheet with Data
+            foreach($weeklyKpisData as $weeklyData) {
+
+                echo $weeklyData['weeklyKPIs']['xrg_week']."<br />";
+
+                $currentSheet->mergeCells("B$cellIndex:V$cellIndex");
+                $currentSheet = $this->xrgSetSheetHead($currentSheet, $weeklyData['weeklyKPIs']['xrg_week'], $cellIndex);
+                $cellIndex++;
+
+                foreach($weeklyData['weeklyKPIs']['xrg_locations'] as $location) {
+                    $cellIndex++;
+                    $currentSheet->setCellValue("B$cellIndex", $location);
+                    $currentSheet->setCellValue("C$cellIndex", $weeklyData['weeklyKPIs'][$location]['net_sales_wtd']);
+                    $currentSheet->setCellValue("D$cellIndex", $weeklyData['weeklyKPIs'][$location]['var_bgt_sale']);
+                    $currentSheet->setCellValue("E$cellIndex", $weeklyData['weeklyKPIs'][$location]['net_profit']);
+                    $currentSheet->setCellValue("F$cellIndex", $weeklyData['weeklyKPIs'][$location]['var_bgt_net_profit']);
+        
+                    $currentSheet->setCellValue("G$cellIndex", "=(F$cellIndex / D$cellIndex)");  // =F3/D3
+        
+                    $currentSheet->setCellValue("K$cellIndex", $weeklyData['weeklyKPIs'][$location]['theo_food_var'] . '%');
+                    $currentSheet->setCellValue("L$cellIndex", $weeklyData['weeklyKPIs'][$location]['theo_liq_var'] . '%');
+                    $currentSheet->setCellValue("M$cellIndex", $weeklyData['weeklyKPIs'][$location]['end_food_inv']);
+                    $currentSheet->setCellValue("N$cellIndex", $weeklyData['weeklyKPIs'][$location]['end_liq_inv']);
+                    $currentSheet->setCellValue("O$cellIndex", $weeklyData['weeklyKPIs'][$location]['theo_labor_wtd'] . '%');
+                    $currentSheet->setCellValue("Q$cellIndex", $weeklyData['weeklyKPIs'][$location]['training_pay_wtd']);
+                    $currentSheet->setCellValue("R$cellIndex", $weeklyData['weeklyKPIs'][$location]['training_weekly_bgt']);
+                
+                    $currentSheet->setCellValue("S$cellIndex", "=(Q$cellIndex - R$cellIndex)");  // =Q3-R3
+                }
+                
+                // Totals 
+                $contentLastIndex = $cellIndex;
+                $cellIndex ++;
+                $currentSheet->setCellValue("B$cellIndex", 'Total');
+                $currentSheet->setCellValue("C$cellIndex", "=SUM(C$contentStartIndex:C$contentLastIndex)");  //=SUM(C3:C11)
+                $currentSheet->setCellValue("D$cellIndex", "=SUM(D$contentStartIndex:D$contentLastIndex)");  //=SUM(D3:D11)
+                $currentSheet->setCellValue("E$cellIndex", "=SUM(E$contentStartIndex:E$contentLastIndex)");  //=SUM(E3:E11)
+                $currentSheet->setCellValue("F$cellIndex", "=SUM(F$contentStartIndex:F$contentLastIndex)");  //=SUM(F3:F11)
+        
+                $currentSheet->setCellValue("G$cellIndex", "=(F$cellIndex / D$cellIndex)");  // =F12/D12
+        
+                $currentSheet->setCellValue("K$cellIndex", "=AVERAGE(K$contentStartIndex:K$contentLastIndex)" . '%'); // =AVERAGE(K3:K11)
+                $currentSheet->setCellValue("L$cellIndex", "=AVERAGE(L$contentStartIndex:L$contentLastIndex)" . '%');  // =AVERAGE(L3:L11)
+                $currentSheet->setCellValue("M$cellIndex", '');
+                $currentSheet->setCellValue("N$cellIndex", '');
+                $currentSheet->setCellValue("O$cellIndex", "=AVERAGE(O$contentStartIndex:O$contentLastIndex)" . '%');  // =AVERAGE(O3:O11)
+                $currentSheet->setCellValue("Q$cellIndex", "=SUM(Q$contentStartIndex:Q$contentLastIndex)");  // =SUM(Q3:Q11)
+                $currentSheet->setCellValue("R$cellIndex", "=SUM(R$contentStartIndex:R$contentLastIndex)");  // =SUM(R3:R11)
+                
+                $currentSheet->setCellValue("S$cellIndex", "=SUM(S$contentStartIndex:S$contentLastIndex)");  // =SUM(S3:S11)
+        
+                $currentSheet->getStyle("B$cellIndex:S$cellIndex")->applyFromArray($genericStyle);
+                $cellIndex++;
+                $contentStartIndex = $cellIndex + 2;
+            }
+        
+
+            
+            
+
+        /*    // Create Sheet with Data
+            $contentIndex += 2;
+            $currentSheet->mergeCells("B$contentIndex:V$contentIndex");
+            $currentSheet = $this->xrgSetSheetHead($currentSheet, $pObj['xrg_week'], $contentIndex);
+            
+            // cell's data
+            $contentIndex += 2;
+            $contentStartIndex = $contentIndex + 1;
+            foreach($pObj['xrg_locations'] as $location) {
+                $contentIndex++;
+                $currentSheet->setCellValue("B$contentIndex", $location);
+                $currentSheet->setCellValue("C$contentIndex", $pObj['net_sales_wtd'][$location]);
+                $currentSheet->setCellValue("D$contentIndex", $pObj['var_bgt_sale'][$location]);
+                $currentSheet->setCellValue("E$contentIndex", $pObj['net_profit'][$location]);
+                $currentSheet->setCellValue("F$contentIndex", $pObj['var_bgt_net_profit'][$location]);
+
+                $currentSheet->setCellValue("G$contentIndex", "=(F$contentIndex / D$contentIndex)");  // =F3/D3
+
+                $currentSheet->setCellValue("K$contentIndex", $pObj['theo_food_var'][$location] . '%');
+                $currentSheet->setCellValue("L$contentIndex", $pObj['theo_liq_var'][$location] . '%');
+                $currentSheet->setCellValue("M$contentIndex", $pObj['end_food_inv'][$location]);
+                $currentSheet->setCellValue("N$contentIndex", $pObj['end_liq_inv'][$location]);
+                $currentSheet->setCellValue("O$contentIndex", $pObj['theo_labor_wtd'][$location] . '%');
+                $currentSheet->setCellValue("Q$contentIndex", $pObj['training_pay_wtd'][$location]);
+                $currentSheet->setCellValue("R$contentIndex", $pObj['training_weekly_bgt'][$location]);
+            
+                $currentSheet->setCellValue("S$contentIndex", "=(Q$contentIndex - R$contentIndex)");  //=Q3-R3
+            }
+
+            // Totals 
+            $contentLastIndex = $contentIndex;
+            $contentIndex += 1;
+            $currentSheet->setCellValue("B$contentIndex", 'Total');
+            $currentSheet->setCellValue("C$contentIndex", "=SUM(C$contentStartIndex:C$contentLastIndex)");  //=SUM(C3:C11)
+            $currentSheet->setCellValue("D$contentIndex", "=SUM(D$contentStartIndex:D$contentLastIndex)");  //=SUM(D3:D11)
+            $currentSheet->setCellValue("E$contentIndex", "=SUM(E$contentStartIndex:E$contentLastIndex)");  //=SUM(E3:E11)
+            $currentSheet->setCellValue("F$contentIndex", "=SUM(F$contentStartIndex:F$contentLastIndex)");  //=SUM(F3:F11)
+
+            $currentSheet->setCellValue("G$contentIndex", "=(F$contentIndex / D$contentIndex)");  // =F12/D12
+
+            $currentSheet->setCellValue("K$contentIndex", "=AVERAGE(K$contentStartIndex:K$contentLastIndex)" . '%'); // =AVERAGE(K3:K11)
+            $currentSheet->setCellValue("L$contentIndex", "=AVERAGE(L$contentStartIndex:L$contentLastIndex)" . '%');  // =AVERAGE(L3:L11)
+            $currentSheet->setCellValue("M$contentIndex", '');
+            $currentSheet->setCellValue("N$contentIndex", '');
+            $currentSheet->setCellValue("O$contentIndex", "=AVERAGE(O$contentStartIndex:O$contentLastIndex)" . '%');  // =AVERAGE(O3:O11)
+            $currentSheet->setCellValue("Q$contentIndex", "=SUM(Q$contentStartIndex:Q$contentLastIndex)");  // =SUM(Q3:Q11)
+            $currentSheet->setCellValue("R$contentIndex", "=SUM(R$contentStartIndex:R$contentLastIndex)");  // =SUM(R3:R11)
+            
+            $currentSheet->setCellValue("S$contentIndex", "=SUM(S$contentStartIndex:S$contentLastIndex)");  // =SUM(S3:S11)
+
+            $currentSheet->getStyle("B$contentIndex:S$contentIndex")->applyFromArray($genericStyle);   */
+
+            // Set active worksheet and write to file
+            $spreadsheet->setActiveSheetIndexByName($sheetObj->period_name);
         }
 
-        // Create Sheet with Data
-        $currentSheet->mergeCells('B1:V1');
-        $currentSheet = $this->xrgSetSheetHead($currentSheet, $pObj['xrg_week'], 1);
-
-        // cell's data
-        $contentIndex = 2;
-        $contentStartIndex = 3;
-        foreach($pObj['xrg_locations'] as $location) {
-            $contentIndex++;
-            $currentSheet->setCellValue("B$contentIndex", $location);
-            $currentSheet->setCellValue("C$contentIndex", $pObj['net_sales_wtd'][$location]);
-            $currentSheet->setCellValue("D$contentIndex", $pObj['var_bgt_sale'][$location]);
-            $currentSheet->setCellValue("E$contentIndex", $pObj['net_profit'][$location]);
-            $currentSheet->setCellValue("F$contentIndex", $pObj['var_bgt_net_profit'][$location]);
-
-            $currentSheet->setCellValue("G$contentIndex", "=(F$contentIndex / D$contentIndex)");  // =F3/D3
-
-            $currentSheet->setCellValue("K$contentIndex", $pObj['theo_food_var'][$location] . '%');
-            $currentSheet->setCellValue("L$contentIndex", $pObj['theo_liq_var'][$location] . '%');
-            $currentSheet->setCellValue("M$contentIndex", $pObj['end_food_inv'][$location]);
-            $currentSheet->setCellValue("N$contentIndex", $pObj['end_liq_inv'][$location]);
-            $currentSheet->setCellValue("O$contentIndex", $pObj['theo_labor_wtd'][$location] . '%');
-            $currentSheet->setCellValue("Q$contentIndex", $pObj['training_pay_wtd'][$location]);
-            $currentSheet->setCellValue("R$contentIndex", $pObj['training_weekly_bgt'][$location]);
-           
-            $currentSheet->setCellValue("S$contentIndex", "=(Q$contentIndex - R$contentIndex)");  // =Q3-R3
-        }
-        
-        // Totals 
-        $contentLastIndex = $contentIndex;
-        $contentIndex += 1;
-        $currentSheet->setCellValue("B$contentIndex", 'Total');
-        $currentSheet->setCellValue("C$contentIndex", "=SUM(C$contentStartIndex:C$contentLastIndex)");  //=SUM(C3:C11)
-        $currentSheet->setCellValue("D$contentIndex", "=SUM(D$contentStartIndex:D$contentLastIndex)");  //=SUM(D3:D11)
-        $currentSheet->setCellValue("E$contentIndex", "=SUM(E$contentStartIndex:E$contentLastIndex)");  //=SUM(E3:E11)
-        $currentSheet->setCellValue("F$contentIndex", "=SUM(F$contentStartIndex:F$contentLastIndex)");  //=SUM(F3:F11)
-
-        $currentSheet->setCellValue("G$contentIndex", "=(F$contentIndex / D$contentIndex)");  // =F12/D12
-
-        $currentSheet->setCellValue("K$contentIndex", "=AVERAGE(K$contentStartIndex:K$contentLastIndex)" . '%'); // =AVERAGE(K3:K11)
-        $currentSheet->setCellValue("L$contentIndex", "=AVERAGE(L$contentStartIndex:L$contentLastIndex)" . '%');  // =AVERAGE(L3:L11)
-        $currentSheet->setCellValue("M$contentIndex", '');
-        $currentSheet->setCellValue("N$contentIndex", '');
-        $currentSheet->setCellValue("O$contentIndex", "=AVERAGE(O$contentStartIndex:O$contentLastIndex)" . '%');  // =AVERAGE(O3:O11)
-        $currentSheet->setCellValue("Q$contentIndex", "=SUM(Q$contentStartIndex:Q$contentLastIndex)");  // =SUM(Q3:Q11)
-        $currentSheet->setCellValue("R$contentIndex", "=SUM(R$contentStartIndex:R$contentLastIndex)");  // =SUM(R3:R11)
-        
-        $currentSheet->setCellValue("S$contentIndex", "=SUM(S$contentStartIndex:S$contentLastIndex)");  // =SUM(S3:S11)
-
-        $currentSheet->getStyle("B$contentIndex:S$contentIndex")->applyFromArray($genericStyle);
-
-         // Create Sheet with Data
-         $contentIndex += 2;
-         $currentSheet->mergeCells("B$contentIndex:V$contentIndex");
-         $currentSheet = $this->xrgSetSheetHead($currentSheet, $pObj['xrg_week'], $contentIndex);
-         
-        // cell's data
-        $contentIndex += 2;
-        $contentStartIndex = $contentIndex + 1;
-        foreach($pObj['xrg_locations'] as $location) {
-            $contentIndex++;
-            $currentSheet->setCellValue("B$contentIndex", $location);
-            $currentSheet->setCellValue("C$contentIndex", $pObj['net_sales_wtd'][$location]);
-            $currentSheet->setCellValue("D$contentIndex", $pObj['var_bgt_sale'][$location]);
-            $currentSheet->setCellValue("E$contentIndex", $pObj['net_profit'][$location]);
-            $currentSheet->setCellValue("F$contentIndex", $pObj['var_bgt_net_profit'][$location]);
-
-            $currentSheet->setCellValue("G$contentIndex", "=(F$contentIndex / D$contentIndex)");  // =F3/D3
-
-            $currentSheet->setCellValue("K$contentIndex", $pObj['theo_food_var'][$location] . '%');
-            $currentSheet->setCellValue("L$contentIndex", $pObj['theo_liq_var'][$location] . '%');
-            $currentSheet->setCellValue("M$contentIndex", $pObj['end_food_inv'][$location]);
-            $currentSheet->setCellValue("N$contentIndex", $pObj['end_liq_inv'][$location]);
-            $currentSheet->setCellValue("O$contentIndex", $pObj['theo_labor_wtd'][$location] . '%');
-            $currentSheet->setCellValue("Q$contentIndex", $pObj['training_pay_wtd'][$location]);
-            $currentSheet->setCellValue("R$contentIndex", $pObj['training_weekly_bgt'][$location]);
-           
-            $currentSheet->setCellValue("S$contentIndex", "=(Q$contentIndex - R$contentIndex)");  //=Q3-R3
-        }
-
-        // Totals 
-        $contentLastIndex = $contentIndex;
-        $contentIndex += 1;
-        $currentSheet->setCellValue("B$contentIndex", 'Total');
-        $currentSheet->setCellValue("C$contentIndex", "=SUM(C$contentStartIndex:C$contentLastIndex)");  //=SUM(C3:C11)
-        $currentSheet->setCellValue("D$contentIndex", "=SUM(D$contentStartIndex:D$contentLastIndex)");  //=SUM(D3:D11)
-        $currentSheet->setCellValue("E$contentIndex", "=SUM(E$contentStartIndex:E$contentLastIndex)");  //=SUM(E3:E11)
-        $currentSheet->setCellValue("F$contentIndex", "=SUM(F$contentStartIndex:F$contentLastIndex)");  //=SUM(F3:F11)
-
-        $currentSheet->setCellValue("G$contentIndex", "=(F$contentIndex / D$contentIndex)");  // =F12/D12
-
-        $currentSheet->setCellValue("K$contentIndex", "=AVERAGE(K$contentStartIndex:K$contentLastIndex)" . '%'); // =AVERAGE(K3:K11)
-        $currentSheet->setCellValue("L$contentIndex", "=AVERAGE(L$contentStartIndex:L$contentLastIndex)" . '%');  // =AVERAGE(L3:L11)
-        $currentSheet->setCellValue("M$contentIndex", '');
-        $currentSheet->setCellValue("N$contentIndex", '');
-        $currentSheet->setCellValue("O$contentIndex", "=AVERAGE(O$contentStartIndex:O$contentLastIndex)" . '%');  // =AVERAGE(O3:O11)
-        $currentSheet->setCellValue("Q$contentIndex", "=SUM(Q$contentStartIndex:Q$contentLastIndex)");  // =SUM(Q3:Q11)
-        $currentSheet->setCellValue("R$contentIndex", "=SUM(R$contentStartIndex:R$contentLastIndex)");  // =SUM(R3:R11)
-        
-        $currentSheet->setCellValue("S$contentIndex", "=SUM(S$contentStartIndex:S$contentLastIndex)");  // =SUM(S3:S11)
-
-        $currentSheet->getStyle("B$contentIndex:S$contentIndex")->applyFromArray($genericStyle);
-
-        // Set active worksheet and write to file
-        $spreadsheet->setActiveSheetIndexByName($pObj['xrg_period']);
         $writer = new Xlsx($spreadsheet);
-        $writer->save( PLUGIN_PATH . 'data/hello world.xlsx' );
+        $writer->save( PLUGIN_PATH . 'data/hello world new.xlsx' );
     }
 
     

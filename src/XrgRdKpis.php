@@ -74,5 +74,18 @@ class XrgRdKpis
         return new XrgKpisReadSheet();
     }
 
+    /**
+     * Create XrgKPIsDB instances
+     *
+     * @since    0.1
+     * @access   public
+     * @return XrgKPIsDB
+     */
+
+    public function xrgDBInstance(): XrgKPIsDB
+    {
+        return new XrgKPIsDB();
+    }
+
 
 }

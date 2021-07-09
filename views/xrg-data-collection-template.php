@@ -1,15 +1,11 @@
 <?php
 
-//use BrunchSheet\BrunchData;
-//(BrunchData::instance());
-//echo BrunchData::instance()->getData();
 use XRG\RD\XrgRdKpis;
 
 get_header();
 
 if(isset($_POST['xrg_kpis_data_submit']) && $_POST['xrg_kpis_data_submit'] === 'SAVE') {
-    print_r($_POST);
-    XrgRdKpis::instance()->xrgLoadSpreadSheet()->xrgWriteFormData($_POST);
+    XrgRdKpis::instance()->xrgDBInstance()->xrgSaveDataToDB($_POST);
 }
 
 // Locations in a region
@@ -19,6 +15,8 @@ $regionLocations = ['Huntington Beach', 'Anaheim', 'Irvine', 'Yorba Linda', 'Cyp
 <div class="alignwide xrg-wrapper">
     <div class="flex-container-form xrg-kpi-data">
         <form method="post" action="" id="kpi_sheet">
+            <input type="hidden" name="xrg_region" value="ASantana" />
+            <input type="hidden" name="xrg_data_type" value="kpis" />
             <div class="flex-body">
                 <div class="flex-col-form">
                     <span class="heading_text">
@@ -91,62 +89,62 @@ $regionLocations = ['Huntington Beach', 'Anaheim', 'Irvine', 'Yorba Linda', 'Cyp
             <div class="flex-body">
                 <div class="flex-col-form">
                     <span class="field_val">
-                        <input type="text" name="xrg_locations[]" value="<?php echo $location; ?>" />
+                        <input type="text" name="xrg_locations[]" value="<?php echo $location; ?>" readonly />
                     </span>
                 </div>
                 <div class="flex-col-form">
                     <span class="field_val">
-                        <input type="text" name="net_sales_wtd[<?php echo $location; ?>]" />
+                        <input type="text" name="<?php echo $location; ?>[net_sales_wtd]" />
                     </span>
                 </div>
                 <div class="flex-col-form">
                     <span class="field_val">
-                        <input type="text" name="var_bgt_sale[<?php echo $location; ?>]" />
+                        <input type="text" name="<?php echo $location; ?>[var_bgt_sale]" />
                     </span> 
                 </div>
                 <div class="flex-col-form">
                     <span class="field_val">
-                        <input type="text" name="net_profit[<?php echo $location; ?>]" />
+                        <input type="text" name="<?php echo $location; ?>[net_profit]" />
                     </span> 
                 </div>
                 <div class="flex-col-form">
                     <span class="field_val">
-                        <input type="text" name="var_bgt_net_profit[<?php echo $location; ?>]" />
+                        <input type="text" name="<?php echo $location; ?>[var_bgt_net_profit]" />
                     </span> 
                 </div>
                 <div class="flex-col-form">
                     <span class="field_val">
-                        <input type="text" name="theo_food_var[<?php echo $location; ?>]" />
+                        <input type="text" name="<?php echo $location; ?>[theo_food_var]" />
                     </span>
                 </div>
                 <div class="flex-col-form">
                     <span class="field_val">
-                        <input type="text" name="theo_liq_var[<?php echo $location; ?>]" />
+                        <input type="text" name="<?php echo $location; ?>[theo_liq_var]" />
                     </span>
                 </div>
                 <div class="flex-col-form">
                     <span class="field_val">
-                        <input type="text" name="end_food_inv[<?php echo $location; ?>]" />
+                        <input type="text" name="<?php echo $location; ?>[end_food_inv]" />
                     </span>
                 </div>
                 <div class="flex-col-form">
                     <span class="field_val">
-                        <input type="text" name="end_liq_inv[<?php echo $location; ?>]" />
+                        <input type="text" name="<?php echo $location; ?>[end_liq_inv]" />
                     </span>
                 </div>
                 <div class="flex-col-form">
                     <span class="field_val">
-                        <input type="text" name="theo_labor_wtd[<?php echo $location; ?>]" />
+                        <input type="text" name="<?php echo $location; ?>[theo_labor_wtd]" />
                     </span>
                 </div>
                 <div class="flex-col-form">
                     <span class="field_val">
-                        <input type="text" name="training_pay_wtd[<?php echo $location; ?>]" />
+                        <input type="text" name="<?php echo $location; ?>[training_pay_wtd]" />
                     </span>
                 </div>
                 <div class="flex-col-form">
                     <span class="field_val">
-                        <input type="text" name="training_weekly_bgt[<?php echo $location; ?>]" />
+                        <input type="text" name="<?php echo $location; ?>[training_weekly_bgt]" />
                     </span>
                 </div>
             </div>
