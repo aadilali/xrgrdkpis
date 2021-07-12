@@ -12,6 +12,8 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
+use XRG\RD\XrgHelperFunctions;
+
 /**
  * Class XrgKpisReadSheet
  *
@@ -51,7 +53,7 @@ class XrgKpisReadSheet
      */
     public function xrgLoadSheet(): Spreadsheet
     {
-        $sheetFile = PLUGIN_PATH . 'data/Antonio-RD-KPI-2021.xlsx';
+        $sheetFile = XRG_PLUGIN_PATH . 'data/Antonio-RD-KPI-2021.xlsx';
         return IOFactory::load($sheetFile);
     }
 
@@ -148,31 +150,32 @@ class XrgKpisReadSheet
             }
 
             // Create Sheet with Data
-            foreach($weeklyKpisData as $weeklyData) {
-
-                echo $weeklyData['weeklyKPIs']['xrg_week']."<br />";
-
+            foreach($weeklyKpisData as $keyName => $weeklyData) {
                 $currentSheet->mergeCells("B$cellIndex:V$cellIndex");
-                $currentSheet = $this->xrgSetSheetHead($currentSheet, $weeklyData['weeklyKPIs']['xrg_week'], $cellIndex);
+                $currentSheet = $this->xrgSetSheetHead($currentSheet, $weeklyData['xrg_week'], $cellIndex);
                 $cellIndex++;
 
-                foreach($weeklyData['weeklyKPIs']['xrg_locations'] as $location) {
+                foreach($weeklyData['xrg_locations'] as $location) {
                     $cellIndex++;
                     $currentSheet->setCellValue("B$cellIndex", $location);
-                    $currentSheet->setCellValue("C$cellIndex", $weeklyData['weeklyKPIs'][$location]['net_sales_wtd']);
-                    $currentSheet->setCellValue("D$cellIndex", $weeklyData['weeklyKPIs'][$location]['var_bgt_sale']);
-                    $currentSheet->setCellValue("E$cellIndex", $weeklyData['weeklyKPIs'][$location]['net_profit']);
-                    $currentSheet->setCellValue("F$cellIndex", $weeklyData['weeklyKPIs'][$location]['var_bgt_net_profit']);
+
+                    // Format location name to use as array keys
+                    $location = XrgHelperFunctions::xrgFormatArrayKeys($location);
+
+                    $currentSheet->setCellValue("C$cellIndex", $weeklyData[$location]['net_sales_wtd']);
+                    $currentSheet->setCellValue("D$cellIndex", $weeklyData[$location]['var_bgt_sale']);
+                    $currentSheet->setCellValue("E$cellIndex", $weeklyData[$location]['net_profit']);
+                    $currentSheet->setCellValue("F$cellIndex", $weeklyData[$location]['var_bgt_net_profit']);
         
                     $currentSheet->setCellValue("G$cellIndex", "=(F$cellIndex / D$cellIndex)");  // =F3/D3
         
-                    $currentSheet->setCellValue("K$cellIndex", $weeklyData['weeklyKPIs'][$location]['theo_food_var'] . '%');
-                    $currentSheet->setCellValue("L$cellIndex", $weeklyData['weeklyKPIs'][$location]['theo_liq_var'] . '%');
-                    $currentSheet->setCellValue("M$cellIndex", $weeklyData['weeklyKPIs'][$location]['end_food_inv']);
-                    $currentSheet->setCellValue("N$cellIndex", $weeklyData['weeklyKPIs'][$location]['end_liq_inv']);
-                    $currentSheet->setCellValue("O$cellIndex", $weeklyData['weeklyKPIs'][$location]['theo_labor_wtd'] . '%');
-                    $currentSheet->setCellValue("Q$cellIndex", $weeklyData['weeklyKPIs'][$location]['training_pay_wtd']);
-                    $currentSheet->setCellValue("R$cellIndex", $weeklyData['weeklyKPIs'][$location]['training_weekly_bgt']);
+                    $currentSheet->setCellValue("K$cellIndex", $weeklyData[$location]['theo_food_var'] . '%');
+                    $currentSheet->setCellValue("L$cellIndex", $weeklyData[$location]['theo_liq_var'] . '%');
+                    $currentSheet->setCellValue("M$cellIndex", $weeklyData[$location]['end_food_inv']);
+                    $currentSheet->setCellValue("N$cellIndex", $weeklyData[$location]['end_liq_inv']);
+                    $currentSheet->setCellValue("O$cellIndex", $weeklyData[$location]['theo_labor_wtd'] . '%');
+                    $currentSheet->setCellValue("Q$cellIndex", $weeklyData[$location]['training_pay_wtd']);
+                    $currentSheet->setCellValue("R$cellIndex", $weeklyData[$location]['training_weekly_bgt']);
                 
                     $currentSheet->setCellValue("S$cellIndex", "=(Q$cellIndex - R$cellIndex)");  // =Q3-R3
                 }
@@ -199,6 +202,8 @@ class XrgKpisReadSheet
                 $currentSheet->setCellValue("S$cellIndex", "=SUM(S$contentStartIndex:S$contentLastIndex)");  // =SUM(S3:S11)
         
                 $currentSheet->getStyle("B$cellIndex:S$cellIndex")->applyFromArray($genericStyle);
+                $cellIndex++;
+                $currentSheet->mergeCells("B$cellIndex:V$cellIndex");
                 $cellIndex++;
                 $contentStartIndex = $cellIndex + 2;
             }
@@ -264,7 +269,7 @@ class XrgKpisReadSheet
         }
 
         $writer = new Xlsx($spreadsheet);
-        $writer->save( PLUGIN_PATH . 'data/hello world new.xlsx' );
+        $writer->save( XRG_PLUGIN_PATH . 'data/hello world new.xlsx' );
     }
 
     
@@ -356,5 +361,4 @@ class XrgKpisReadSheet
 
         return $sheet;
     }
-
 }

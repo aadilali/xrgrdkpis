@@ -1,0 +1,236 @@
+.xrg-wrapper {
+    width: 96%;
+    margin: 0 auto;
+}
+.xrg-table-container {
+    margin-top: 20px;
+}
+.xrg-table-container table {
+    width: 98%;
+    padding: 1%;
+    border-collapse:separate;
+    border-spacing: 0px;
+    font-size: 12px;
+    border: none;
+    text-align: center;
+}
+.xrg-table-container th, .xrg-table-container td {
+    border: 1px solid #000;
+    padding: 5px;
+    text-align: center;
+}
+.xrg-table-container .empty-row {
+    height: 40px;
+}
+.xrg-table-container .empty-row td {
+    border: none !important;
+}
+.xrg-table-container .weekly-heading th {
+    font-weight: bold;
+    font-size: 14px;
+}
+.xrg-table-container .header-bg, .xrg-table-container .total-bg{
+    background: #d9d9d9;
+    font-weight: bold;
+}
+.xrg-table-container .weekly-budget {
+    background: #d9d9d9;
+}
+.xrg-table-container .weekly-content td {
+    border: 1px dotted #000;
+}
+.xrg-table-container .weekly-content td:first-child {
+    border-left: 1px solid #000;
+}
+.xrg-table-container .weekly-content td:last-child {
+    border-right: 1px solid #000;
+}
+.xrg-table-container .color-red {
+    color: #c00000;
+}
+
+.control-sheet-grand-total {
+    margin-top: 30px;
+}
+.control-sheet-grand-total .gt-first-heading {
+    text-align: center;
+    font-size: 18px;
+    background-color: #ddebf7;
+    border: 2px solid #000;
+}
+.control-sheet-grand-total .gt-second-heading {
+    text-align: center;
+    font-size: 18px;
+    color: #c00000;
+    border: 2px solid #000;
+}
+
+.border-none { 
+    border: none !important;
+}
+.align-right {
+    text-align: right;
+}
+#add_new_record {
+    padding: 15px 25px;
+    margin: 10px 0;
+    background: #12627B;
+    display: inline-block;
+    cursor: pointer;
+    color: #fff !important;
+    line-height: 1.7;
+    border: none;
+}
+#add_new_record:hover {
+    background: #B9500B;
+}
+input.btn, .btn-transfer, .span-btn {
+    padding: 10px 30px;
+    margin: 10px 0px;
+    background: #B9500B;
+    display: inline-block;
+    cursor: pointer;
+    width: auto;
+    color: #fff;
+    border: none;
+    line-height: 1.8;
+}
+.btn-transfer {
+    background: #fff;
+    color: #12627B;
+    border: 1px solid #12627B;
+    font-size: 12px;
+    padding: 5px;
+    margin: 0;
+}
+input.btn:hover, .btn-transfer:hover, .span-btn:hover {
+    background: #12627B;
+    color: #fff;
+}
+
+#host_reconcile {
+    padding: 14px;
+    margin: 10px 0;
+    cursor: pointer;
+}
+
+.notification {
+    font-style: italic;
+    color: #c00000;
+    font-size: 15px;
+}
+.reconcile-btn {
+    text-decoration: none;
+    border: 2px solid #12627B;
+    padding: 15px 25px;
+}
+.reconcile-btn:hover {
+    background: #12627B;
+    color: #fff;
+}
+.flex-button-body {
+    display: flex;
+    align-items: center;
+}
+.flex-button-body .flex-col-form {
+    flex-grow: 1;
+}
+.has-padding {
+    padding: 0 15px;
+}
+.overlay {
+    position: fixed;
+    top: 100px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.7);
+    transition: opacity 500ms;
+    visibility: hidden;
+    opacity: 0;
+    z-index: 999;
+  }
+  .overlay:target {
+    visibility: visible;
+    opacity: 1;
+  }
+  
+  .popup {
+    margin: 70px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 5px;
+    width: 30%;
+    position: relative;
+    transition: all 5s ease-in-out;
+  }
+  
+  .popup h2 {
+    margin-top: 0;
+    color: #333;
+    font-family: Tahoma, Arial, sans-serif;
+  }
+  .popup .close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    transition: all 200ms;
+    font-size: 30px;
+    font-weight: bold;
+    text-decoration: none;
+    color: #333;
+  }
+  .popup .close:hover {
+    color: #12627B;
+  }
+  .popup .content {
+    max-height: 30%;
+    overflow: auto;
+  }
+  
+  input.blue-bg-btn {
+      background: #12627B;
+  }
+  input.blue-bg-btn:hover {
+      background: #B9500B;
+  }
+
+  @media screen and (max-width: 700px){
+    .box{
+      width: 70%;
+    }
+    .popup{
+      width: 70%;
+    }
+  }
+
+#old_sheet_ids {
+    margin-bottom: 20px;
+    appearance: auto;
+    -webkit-appearance: auto;
+    -moz-appearance: auto;
+}
+
+.mw-70 {
+    max-width: 150px;
+}
+.mw-100 {
+    max-width: 180px;
+}
+
+@media screen and (max-width:1080px) {
+    .mw-70 {
+        max-width: 70px;
+    }
+    .mw-100 {
+        max-width: 100px;
+    }
+}
+.xrg-wrapper {
+    width: 95%;
+    margin: 0 auto;
+}
+
+.xrg-kpi-data .flex-head .flex-col-form-head, .xrg-kpi-data .flex-body .flex-col-form {
+    font-size: 12px;
+}

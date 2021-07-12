@@ -11,7 +11,8 @@ Author URI: https://www.presstigers.com
 
 namespace XRG\RD;
 
-define('PLUGIN_PATH', plugin_dir_path( __FILE__ ));
+define('XRG_PLUGIN_PATH', plugin_dir_path( __FILE__ ));
+define('XRG_PLUGIN_URI', plugin_dir_url( __FILE__ ));
 
 if (!class_exists(XrgRdKpis::class) && is_readable(__DIR__.'/vendor/autoload.php')) {
     /** @noinspection PhpIncludeInspection */

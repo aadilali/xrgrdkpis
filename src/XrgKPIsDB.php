@@ -6,6 +6,8 @@ declare(strict_types=1);
 
 namespace XRG\RD;
 
+use XRG\RD\XrgHelperFunctions; 
+
 /**
  * Class XrgKPIsDB
  *
@@ -55,7 +57,8 @@ class XrgKPIsDB
         unset( $pObj['xrg_data_type'] );
 
         if( $dataType === 'kpis' ) {
-            $weeklyKPIs[]['weeklyKPIs'] = $pObj;
+            $weeklyKPIs[XrgHelperFunctions::xrgFormatArrayKeys($pObj['xrg_week'])] = $pObj;
+            //$weeklyKPIs[]['weeklyKPIs'] = $pObj;
         }
 
         if( $dataType === 'labor' ) {
@@ -138,7 +141,7 @@ class XrgKPIsDB
         global $wpdb;
         if( $dataType === 'kpis' ) {
             $tempData = unserialize($existingKpiData);
-            array_push( $tempData, $weeklyKpiData[0] );
+            $tempData = array_merge( $tempData, $weeklyKpiData );
             $dataColumns = ['weekly_kpis_data' => serialize( $tempData )];
             $dataFormat = [ '%s' ];
         }
@@ -155,5 +158,4 @@ class XrgKPIsDB
 
         return $wpdb->update( $this->xrgTableName, $dataColumns, $dataWhere, $dataFormat, $whereFormat );
     }
-
 }

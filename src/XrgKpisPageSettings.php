@@ -41,8 +41,8 @@ class XrgKpisPageSettings
         add_filter('query_vars', [$this, 'registerQueryVars']);
 
         // Flush Parmalink Cache
-        register_activation_hook( PLUGIN_PATH.'xrg-rd-kpis.php', [$this, 'xrgParmalinkOption'] );
-        register_deactivation_hook( PLUGIN_PATH.'xrg-rd-kpis.php', [$this, 'xrgParmalinkOption'] );
+        register_activation_hook( XRG_PLUGIN_PATH.'xrg-rd-kpis.php', [$this, 'xrgParmalinkOption'] );
+        register_deactivation_hook( XRG_PLUGIN_PATH.'xrg-rd-kpis.php', [$this, 'xrgParmalinkOption'] );
     }
 
     /**
@@ -84,7 +84,7 @@ class XrgKpisPageSettings
         $page = get_query_var('xrg_kpi_page');
 
         if ($page === $this->xrgEndpoint) {
-            $template = PLUGIN_PATH . 'views/' . $this->xrgTemplateName . '.php';
+            $template = XRG_PLUGIN_PATH . 'views/' . $this->xrgTemplateName . '.php';
         }
 
         return $template;

@@ -1,6 +1,7 @@
 <?php
 
 use XRG\RD\XrgRdKpis;
+use XRG\RD\XrgHelperFunctions;
 
 get_header();
 
@@ -92,6 +93,7 @@ $regionLocations = ['Huntington Beach', 'Anaheim', 'Irvine', 'Yorba Linda', 'Cyp
                         <input type="text" name="xrg_locations[]" value="<?php echo $location; ?>" readonly />
                     </span>
                 </div>
+                <?php  $location = XrgHelperFunctions::xrgFormatArrayKeys($location); ?>
                 <div class="flex-col-form">
                     <span class="field_val">
                         <input type="text" name="<?php echo $location; ?>[net_sales_wtd]" />
