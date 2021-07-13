@@ -3,27 +3,41 @@
 use XRG\RD\XrgRdKpis;
 use XRG\RD\XrgHelperFunctions;
 
-//(BrunchData::instance());
-//echo BrunchData::instance()->getData();
-
+// Action to download File
+if(isset($_GET['gen-sheet']) && $_GET['gen-sheet'] == 1) {
+    XrgRdKpis::instance()->xrgLoadSpreadSheet()->xrgGenerateSpreadSheet('ASantana');
+    $file =  XRG_PLUGIN_PATH . 'data/ASantana.xlsx';
+    if (file_exists($file)) {
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename="'.basename($file).'"');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . filesize($file));
+        readfile($file);
+    } else {
+        echo 'file not found';
+    }
+}
+// Get data from DB class
+$sheetData = XrgRdKpis::instance()->xrgDBInstance()->xrgGetRegionalData( 'ASantana' );
+        
 get_header();
 
-       // XrgRdKpis::instance()->xrgLoadSpreadSheet()->xrgWriteHtmlTable(); 
-      // XrgRdKpis::instance()->xrgLoadSpreadSheet()->xrgGenerateSpreadSheet('ASantana');
-       /* $worksheet = $spreadsheet->getActiveSheet();
-        $rows = $worksheet->toArray();
-        echo count($rows);        */
-        // Get data from DB class
-        $sheetData = XrgRdKpis::instance()->xrgDBInstance()->xrgGetRegionalData( 'ASantana' );
 ?>
 
 <section>
     <div class="xrg-wrapper">
         <div class="notification"><?php echo isset($_GET['message']) ? 'Sheet has been emailed successfully!' : ''; ?></div>
     <?php if($sheetData) : ?>
+        <div class="btn-container">
+            <a href="?gen-sheet=1" class="btn">Download File</a>
+        </div>
         <div class="xrg-table-container">
             <table class="periods-sheet">
                 <?php 
+
                /*  foreach($sheetData as $sheetObj) {
                     // cell's data
                     $cellIndex = 1;
@@ -52,6 +66,8 @@ get_header();
                         $trainingPay = 0;
                         $trainingWeekly = 0;
                         $difference = 0;
+
+                        $totalLocation = count($weeklyData['xrg_locations']);
 
                     ?>
                         <thead>
@@ -90,7 +106,7 @@ get_header();
                                 $varBudgetSale += $weeklyData[$location]['var_bgt_sale'];
                                 $netProfit += $weeklyData[$location]['net_profit'];
                                 $varBudgetProfit += $weeklyData[$location]['var_bgt_net_profit'];
-                                $flowThru += ($weeklyData[$location]['var_bgt_net_profit'] / $weeklyData[$location]['net_sales_wtd']);
+                                $flowThru += ($weeklyData[$location]['var_bgt_net_profit'] / $weeklyData[$location]['var_bgt_sale'] );
                                 $tFoodVar += $weeklyData[$location]['theo_food_var'];
                                 $tLiquorVar += $weeklyData[$location]['theo_liq_var'];
                                 $foodInv += $weeklyData[$location]['end_food_inv'];
@@ -105,7 +121,6 @@ get_header();
                                 $finalTotal[$location]['var_bgt_sale'] += $weeklyData[$location]['var_bgt_sale'];
                                 $finalTotal[$location]['net_profit'] += $weeklyData[$location]['net_profit'];
                                 $finalTotal[$location]['var_bgt_net_profit'] += $weeklyData[$location]['var_bgt_net_profit'];
-                                $finalTotal[$location]['flow_thru'] += ($weeklyData[$location]['var_bgt_net_profit'] / $weeklyData[$location]['net_sales_wtd']);
                                 $finalTotal[$location]['theo_food_var'] += $weeklyData[$location]['theo_food_var'];
                                 $finalTotal[$location]['theo_liq_var'] += $weeklyData[$location]['theo_liq_var'];
                                 $finalTotal[$location]['end_food_inv'] += $weeklyData[$location]['end_food_inv'];
@@ -115,38 +130,38 @@ get_header();
                                 $finalTotal[$location]['training_weekly_bgt'] += $weeklyData[$location]['training_weekly_bgt'];
                                 $finalTotal[$location]['difference'] += ($weeklyData[$location]['training_pay_wtd'] - $weeklyData[$location]['training_weekly_bgt']);
                                 ?>
-                                <td><?php echo $weeklyData[$location]['net_sales_wtd']; ?></td>
-                                <td><?php echo $weeklyData[$location]['var_bgt_sale']; ?></td>
-                                <td><?php echo $weeklyData[$location]['net_profit']; ?></td>
-                                <td><?php echo $weeklyData[$location]['var_bgt_net_profit']; ?></td>
-                                <td><?php echo ($weeklyData[$location]['var_bgt_net_profit'] / $weeklyData[$location]['net_sales_wtd']); ?></td>
-                                <td><?php echo $weeklyData[$location]['theo_food_var']; ?></td>
-                                <td><?php echo $weeklyData[$location]['theo_liq_var']; ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($weeklyData[$location]['net_sales_wtd'], 'currency'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($weeklyData[$location]['var_bgt_sale'], 'currency'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($weeklyData[$location]['net_profit'], 'currency'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($weeklyData[$location]['var_bgt_net_profit'], 'currency'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue(($weeklyData[$location]['var_bgt_net_profit'] / $weeklyData[$location]['var_bgt_sale'] * 100), 'percentage'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($weeklyData[$location]['theo_food_var'], 'percentage'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($weeklyData[$location]['theo_liq_var'], 'percentage'); ?></td>
                                 <td><?php echo $weeklyData[$location]['end_food_inv']; ?></td>
                                 <td><?php echo $weeklyData[$location]['end_liq_inv']; ?></td>
-                                <td><?php echo $weeklyData[$location]['theo_labor_wtd']; ?></td>
-                                <td><?php echo $weeklyData[$location]['training_pay_wtd']; ?></td>
-                                <td class="weekly-budget"><?php echo $weeklyData[$location]['training_weekly_bgt']; ?></td>
-                                <td><?php echo ($weeklyData[$location]['training_pay_wtd'] - $weeklyData[$location]['training_weekly_bgt']); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($weeklyData[$location]['theo_labor_wtd'], 'percentage'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($weeklyData[$location]['training_pay_wtd'], 'currency'); ?></td>
+                                <td class="weekly-budget"><?php echo XrgHelperFunctions::xrgFormatValue($weeklyData[$location]['training_weekly_bgt'], 'currency'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue(($weeklyData[$location]['training_pay_wtd'] - $weeklyData[$location]['training_weekly_bgt']), 'currency'); ?></td>
                             </tr>
                         <?php endforeach; ?>
                         <!--  TOTALs  -->
                         <tr class="total-bg">
                             <td class=""></td>
                             <td>TOTAL</td>
-                            <td><?php echo $netSaleWTD; ?></td>
-                            <td><?php echo $varBudgetSale; ?></td>
-                            <td><?php echo $netProfit; ?></td>
-                            <td><?php echo $varBudgetProfit; ?></td>
-                            <td><?php echo $flowThru; ?></td>
-                            <td><?php echo $tFoodVar; ?></td>
-                            <td><?php echo $tLiquorVar; ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue($netSaleWTD, 'currency'); ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue($varBudgetSale, 'currency'); ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue($netProfit, 'currency'); ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue($varBudgetProfit, 'currency'); ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue($flowThru, 'percentage'); ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue(($tFoodVar/$totalLocation), 'percentage'); ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue($tLiquorVar, 'percentage'); ?></td>
                             <td><?php echo $foodInv; ?></td>
                             <td><?php echo $liquorInv; ?></td>
-                            <td><?php echo $tLaborWTD; ?></td>
-                            <td><?php echo $trainingPay; ?></td>
-                            <td><?php echo $trainingWeekly; ?></td>
-                            <td><?php echo $difference; ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue($tLaborWTD, 'percentage'); ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue($trainingPay, 'currency'); ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue($trainingWeekly, 'currency'); ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue($difference, 'currency'); ?></td>
                         </tr>
                         <!--  Empty Row  -->
                         <tr class="empty-row">
@@ -187,7 +202,6 @@ get_header();
                         $varBudgetSale = 0;
                         $netProfit = 0;
                         $varBudgetProfit = 0;
-                        $flowThru = 0;
                         $tFoodVar = 0;
                         $tLiquorVar = 0;
                         $foodInv = 0;
@@ -197,13 +211,14 @@ get_header();
                         $trainingWeekly = 0;
                         $difference = 0;
 
+                        $totalLocation = count($finalTotal);
+
                         foreach($finalTotal as $key => $locationData) : 
                             
                             $netSaleWTD += $locationData['net_sales_wtd'];
                             $varBudgetSale += $locationData['var_bgt_sale'];
                             $netProfit += $locationData['net_profit'];
                             $varBudgetProfit += $locationData['var_bgt_net_profit'];
-                            $flowThru += $locationData['flow_thru'];
                             $tFoodVar += $locationData['theo_food_var'];
                             $tLiquorVar += $locationData['theo_liq_var'];
                             $foodInv += $locationData['end_food_inv'];
@@ -216,38 +231,38 @@ get_header();
                             <tr class="weekly-content">
                                 <td></td>
                                 <td><?php echo $key; ?></td>
-                                <td><?php echo $locationData['net_sales_wtd']; ?></td>
-                                <td><?php echo $locationData['var_bgt_sale']; ?></td>
-                                <td><?php echo $locationData['net_profit']; ?></td>
-                                <td><?php echo $locationData['var_bgt_net_profit']; ?></td>
-                                <td><?php echo $locationData['flow_thru']; ?></td>
-                                <td><?php echo $locationData['theo_food_var']; ?></td>
-                                <td><?php echo $locationData['theo_liq_var']; ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($locationData['net_sales_wtd'], 'currency'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($locationData['var_bgt_sale'], 'currency'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($locationData['net_profit'], 'currency'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($locationData['var_bgt_net_profit'], 'currency'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue(($locationData['var_bgt_net_profit'] / $locationData['var_bgt_sale']) * 100, 'percentage'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($locationData['theo_food_var'], 'percentage'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($locationData['theo_liq_var'], 'percentage'); ?></td>
                                 <td><?php echo $locationData['end_food_inv']; ?></td>
                                 <td><?php echo $locationData['end_liq_inv']; ?></td>
-                                <td><?php echo $locationData['theo_labor_wtd']; ?></td>
-                                <td><?php echo $locationData['training_pay_wtd']; ?></td>
-                                <td class="weekly-budget"><?php echo $locationData['training_weekly_bgt']; ?></td>
-                                <td><?php echo $locationData['difference']; ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($locationData['theo_labor_wtd'], 'percentage'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($locationData['training_pay_wtd'], 'currency'); ?></td>
+                                <td class="weekly-budget"><?php echo XrgHelperFunctions::xrgFormatValue($locationData['training_weekly_bgt'], 'currency'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($locationData['difference'], 'currency'); ?></td>
                             </tr>
                         <?php endforeach; ?>
                         <!--  TOTALs  -->
                         <tr class="total-bg">
                             <td class=""></td>
                             <td>TOTAL</td>
-                            <td><?php echo $netSaleWTD; ?></td>
-                            <td><?php echo $varBudgetSale; ?></td>
-                            <td><?php echo $netProfit; ?></td>
-                            <td><?php echo $varBudgetProfit; ?></td>
-                            <td><?php echo $flowThru; ?></td>
-                            <td><?php echo $tFoodVar; ?></td>
-                            <td><?php echo $tLiquorVar; ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue($netSaleWTD, 'currency'); ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue($varBudgetSale, 'currency'); ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue($netProfit, 'currency'); ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue($varBudgetProfit, 'currency'); ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue(($varBudgetProfit / $varBudgetSale) * 100 , 'percentage'); ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue(($tFoodVar/$totalLocation), 'percentage'); ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue($tLiquorVar, 'percentage'); ?></td>
                             <td><?php echo $foodInv; ?></td>
                             <td><?php echo $liquorInv; ?></td>
-                            <td><?php echo $tLaborWTD; ?></td>
-                            <td><?php echo $trainingPay; ?></td>
-                            <td><?php echo $trainingWeekly; ?></td>
-                            <td><?php echo $difference; ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue($tLaborWTD, 'percentage'); ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue($trainingPay, 'currency'); ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue($trainingWeekly, 'currency'); ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue($difference, 'currency'); ?></td>
                         </tr>
                         <!--  Empty Row  -->
                         <tr class="empty-row">
