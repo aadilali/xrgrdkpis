@@ -12,6 +12,13 @@ if(isset($_POST['xrg_kpis_data_submit']) && $_POST['xrg_kpis_data_submit'] === '
 // Locations in a region
 $regionLocations = ['Huntington Beach', 'Anaheim', 'Irvine', 'Yorba Linda', 'Cypress'];
 
+// Months against periods
+$periodDetails = ['Period 1', 'Period 2', 'Period 3', 'Period 4', 'Period 5', 'Period 6', 'Period 7', 'Period 8', 'Period 9', 'Period 10', 'Period 11', 'Period 12'];
+$currentMonth = date('m');
+
+$weekDetails = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5'];
+$currentWeek = ceil((date("d",strtotime('today')) - date("w",strtotime('today')) - 1) / 7) + 1;
+
 ?>
 <div class="alignwide xrg-wrapper">
     <div class="flex-container-form xrg-kpi-data">
@@ -24,12 +31,14 @@ $regionLocations = ['Huntington Beach', 'Anaheim', 'Irvine', 'Yorba Linda', 'Cyp
                         Select Period
                     </span> 
                     <span class="field_val">
-                        <select name="xrg_period">
-                            <option value="0">Select Period</option>
-                            <option value="Period 1">Period 1</option>
-                            <option value="Period 2">Period 2</option>
-                            <option value="Period 3">Period 3</option>
-                            <option value="Period 4">Period 4</option>
+                        <select name="xrg_period" required>
+                            <option value="">Select Period</option>
+                            <?php 
+                            foreach($periodDetails as $pd) {
+                                $selectedPeriod = ($periodDetails[$currentMonth - 1] === $pd) ? 'selected' : '';
+                                echo '<option value="'.$pd.'" '.$selectedPeriod.'>'.$pd.'</option>'; 
+                            }
+                            ?>
                         </select>
                     </span>
                 </div>
@@ -38,12 +47,14 @@ $regionLocations = ['Huntington Beach', 'Anaheim', 'Irvine', 'Yorba Linda', 'Cyp
                         Select Week
                     </span> 
                     <span class="field_val">
-                        <select name="xrg_week">
-                            <option value="0">Select Week</option>
-                            <option value="Week 1">Week 1</option>
-                            <option value="Week 2">Week 2</option>
-                            <option value="Week 3">Week 3</option>
-                            <option value="Week 4">Week 4</option>
+                        <select name="xrg_week" required>
+                            <option value="">Select Week</option>
+                            <?php 
+                            foreach($weekDetails as $index => $wd) {
+                                $selectedWeek = ( $currentWeek == ($index + 1)) ? 'selected' : '';
+                                echo '<option value="'.$wd.'" '.$selectedWeek.'>'.$wd.'</option>'; 
+                            }
+                            ?>
                         </select>
                     </span>
                 </div>

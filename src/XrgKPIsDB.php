@@ -101,7 +101,7 @@ class XrgKPIsDB
     public function xrgGetRegionalData(string $region)
     {
         global $wpdb;
-        return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $this->xrgTableName WHERE region_name = %s", $region ) );
+        return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $this->xrgTableName WHERE region_name = %s ORDER BY id ASC", $region ) );
     }
 
      /**

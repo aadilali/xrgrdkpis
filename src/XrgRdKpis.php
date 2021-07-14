@@ -45,8 +45,8 @@ class XrgRdKpis
         $this->xrgRdKpisInstances('rd-entry-sheet', 'xrg-data-collection-template');
         $this->xrgRdKpisInstances('rd-view-sheet', 'xrg-data-view-template');
         
-        // Enqueue Style 
-        add_action( 'wp_enqueue_scripts', [$this, 'xrgLoadStyle'] );
+        // Enqueue Style and Scripts
+        add_action( 'wp_enqueue_scripts', [$this, 'xrgLoadScripts'] );
     }
 
     /**
@@ -93,8 +93,12 @@ class XrgRdKpis
     /**
      * Enqueue scripts and styles
     */
-    public function xrgLoadStyle() {
-        wp_enqueue_style( 'xrg-rd-kpis', XRG_PLUGIN_URI.'assets/css/xrg-rd-kpis-style.css' );
+    public function xrgLoadScripts() {
+        wp_register_style( 'xrg-rd-kpis', XRG_PLUGIN_URI.'assets/css/xrg-rd-kpis-style.css' );
+        wp_enqueue_style( 'xrg-rd-kpis' );
+
+        wp_register_script('xrg-rd-kpis-main', XRG_PLUGIN_URI.'assets/js/xrg-rd-kpis-main.js', ['jquery'], '0.1', true);
+        wp_enqueue_script( 'xrg-rd-kpis-main' );
     }
 
 }

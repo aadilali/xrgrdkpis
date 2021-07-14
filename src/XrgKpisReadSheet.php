@@ -117,7 +117,6 @@ class XrgKpisReadSheet
         $sheetObjs = XrgRdKpis::instance()->xrgDBInstance()->xrgGetRegionalData( $regionName );
         
         $spreadsheet = new Spreadsheet();
-        $finalTotal = [];
 
         // Generic Style Array
         $genericStyle = [
@@ -149,6 +148,7 @@ class XrgKpisReadSheet
             // cell's data
             $cellIndex = 1;
             $contentStartIndex = 3;
+            $finalTotal = [];
             
             $weeklyKpisData = unserialize($sheetObj->weekly_kpis_data);
 
