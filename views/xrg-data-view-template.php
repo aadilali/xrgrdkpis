@@ -271,7 +271,7 @@ get_header();
                 foreach($sheetData as $sheetObj) : 
                     $period = XrgHelperFunctions::xrgFormatArrayKeys($sheetObj->period_name); 
             ?>
-                <button class="periods-tab" data-period-id="<?php echo $period; ?>" ><?php echo $sheetObj->period_name; ?></button>
+                <button class="periods-tab view-template-tabs" data-period-id="<?php echo $period; ?>" ><?php echo $sheetObj->period_name; ?></button>
                 <?php endforeach; ?>
             </div>
         <?php else : ?>

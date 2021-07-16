@@ -1,6 +1,6 @@
 ( function ( $ ) {
     // Function to display the Tabs content
-    const openCity = (thisObj) => {
+    const displayTab = (thisObj) => {
         // Hide All tabs first
         $('.period-tab-content').hide();
         $('.periods-tab').removeClass('active-tab');
@@ -17,15 +17,21 @@
        
         // Bind All Tabs Link to click function
         $(document).on('click', '.periods-tab', function () {
-            openCity(this)
+            displayTab(this)
         } );
 
-         // Get the element with id="defaultOpen" and click on it
-         $(".periods-tab").last().click();
+        // Get the element with id="defaultOpen" and click on it
+        $(".view-template-tabs").last().click();
+        $(".entry-template-tabs").first().click();
+
+        // Labor Form week selector
+        $('#week-value').text($('.labor-form-week').val());
+
+        $('.labor-form-week').on('change', function () {
+           $('#week-value').text($(this).val());
+        });
 
     });
-      
-    
     
       
 } )( jQuery );
