@@ -65,7 +65,6 @@ get_header();
                         $difference = 0;
 
                         $totalLocation = count($weeklyData['xrg_locations']);
-
                         ?>
                         <thead>
                             <tr class="weekly-heading">
@@ -96,50 +95,69 @@ get_header();
                                 <td></td>
                                 <td><?php echo $location; ?></td>
                                 <?php
+                                
                                 // Format location name to use as array keys
                                 $location = XrgHelperFunctions::xrgFormatArrayKeys($location); 
+                                
+                                // Fill array keys with default value
+                                if(!(isset($finalTotal[$location]))) {
+                                  //  array_push($finalTotal, $location);
+                                    $finalTotal[$location] = XrgHelperFunctions::xrgFillLocationKeys('kpis');
+                                }
                     
-                                $netSaleWTD += $weeklyData[$location]['net_sales_wtd'];
-                                $varBudgetSale += $weeklyData[$location]['var_bgt_sale'];
-                                $netProfit += $weeklyData[$location]['net_profit'];
-                                $varBudgetProfit += $weeklyData[$location]['var_bgt_net_profit'];
-                                $flowThru += ($weeklyData[$location]['var_bgt_net_profit'] / $weeklyData[$location]['var_bgt_sale'] );
-                                $tFoodVar += $weeklyData[$location]['theo_food_var'];
-                                $tLiquorVar += $weeklyData[$location]['theo_liq_var'];
-                                $foodInv += $weeklyData[$location]['end_food_inv'];
-                                $liquorInv += $weeklyData[$location]['end_liq_inv'];
-                                $tLaborWTD += $weeklyData[$location]['theo_labor_wtd'];
-                                $trainingPay += $weeklyData[$location]['training_pay_wtd'];
-                                $trainingWeekly += $weeklyData[$location]['training_weekly_bgt'];
-                                $difference += ($weeklyData[$location]['training_pay_wtd'] - $weeklyData[$location]['training_weekly_bgt']);
+                                //Temp Variables for calculations
+                                $netSaleTemp = is_numeric($weeklyData[$location]['net_sales_wtd']) ?: 0;
+                                $netProfitTemp = is_numeric($weeklyData[$location]['net_profit']) ?: 0;
+                                $bdgtProfitTemp = is_numeric($weeklyData[$location]['var_bgt_net_profit']) ?: 0;
+                                $bdgtSaleTemp = is_numeric($weeklyData[$location]['var_bgt_sale']) ?: 0;
+                                $tFoodVarTemp = is_numeric($weeklyData[$location]['theo_food_var']) ?: 0;
+                                $tLiquorVarTemp = is_numeric($weeklyData[$location]['theo_liq_var']) ?: 0;
+                                $foodInvTemp = is_numeric($weeklyData[$location]['end_food_inv']) ?: 0;
+                                $liquorInvTemp = is_numeric($weeklyData[$location]['end_liq_inv']) ?: 0;
+                                $tLaborWTDTemp = is_numeric($weeklyData[$location]['theo_labor_wtd']) ?: 0;
+                                $trainingPayTemp = is_numeric($weeklyData[$location]['training_pay_wtd']) ?: 0;
+                                $trainingWeeklyTemp = is_numeric($weeklyData[$location]['training_weekly_bgt']) ?: 0;
+
+                                $netSaleWTD += $netSaleTemp;
+                                $varBudgetSale += $bdgtSaleTemp;
+                                $netProfit += $netProfitTemp;
+                                $varBudgetProfit += $bdgtProfitTemp;
+                                $tFoodVar += $tFoodVarTemp;
+                                $tLiquorVar += $tLiquorVarTemp;
+                                $foodInv += $foodInvTemp;
+                                $liquorInv += $liquorInvTemp;
+                                $tLaborWTD += $tLaborWTDTemp;
+                                $trainingPay += $trainingPayTemp;
+                                $trainingWeekly += $trainingWeeklyTemp;
+                                $difference += ($trainingPayTemp - $trainingWeeklyTemp);
 
                                 // Push to Final Total Array
-                                $finalTotal[$location]['net_sales_wtd'] += $weeklyData[$location]['net_sales_wtd'];
-                                $finalTotal[$location]['var_bgt_sale'] += $weeklyData[$location]['var_bgt_sale'];
-                                $finalTotal[$location]['net_profit'] += $weeklyData[$location]['net_profit'];
-                                $finalTotal[$location]['var_bgt_net_profit'] += $weeklyData[$location]['var_bgt_net_profit'];
-                                $finalTotal[$location]['theo_food_var'] += $weeklyData[$location]['theo_food_var'];
-                                $finalTotal[$location]['theo_liq_var'] += $weeklyData[$location]['theo_liq_var'];
-                                $finalTotal[$location]['end_food_inv'] += $weeklyData[$location]['end_food_inv'];
-                                $finalTotal[$location]['end_liq_inv'] += $weeklyData[$location]['end_liq_inv'];
-                                $finalTotal[$location]['theo_labor_wtd'] += $weeklyData[$location]['theo_labor_wtd'];
-                                $finalTotal[$location]['training_pay_wtd'] += $weeklyData[$location]['training_pay_wtd'];
-                                $finalTotal[$location]['training_weekly_bgt'] += $weeklyData[$location]['training_weekly_bgt'];
-                                $finalTotal[$location]['difference'] += ($weeklyData[$location]['training_pay_wtd'] - $weeklyData[$location]['training_weekly_bgt']);
+                                $finalTotal[$location]['net_sales_wtd'] += $netSaleTemp;
+                                $finalTotal[$location]['var_bgt_sale'] += $bdgtSaleTemp;
+                                $finalTotal[$location]['net_profit'] += $netProfitTemp;
+                                $finalTotal[$location]['var_bgt_net_profit'] += $bdgtProfitTemp;
+                                $finalTotal[$location]['theo_food_var'] += $tFoodVarTemp;
+                                $finalTotal[$location]['theo_liq_var'] += $tLiquorVarTemp;
+                                $finalTotal[$location]['end_food_inv'] +=$foodInvTemp;
+                                $finalTotal[$location]['end_liq_inv'] += $liquorInvTemp;
+                                $finalTotal[$location]['theo_labor_wtd'] += $tLaborWTDTemp;
+                                $finalTotal[$location]['training_pay_wtd'] += $trainingPayTemp;
+                                $finalTotal[$location]['training_weekly_bgt'] += $trainingWeeklyTemp;
+                                $finalTotal[$location]['difference'] += ($trainingPayTemp - $trainingWeeklyTemp);
                                 ?>
-                                <td><?php echo XrgHelperFunctions::xrgFormatValue((!empty($weeklyData[$location]['net_sales_wtd']) ? $weeklyData[$location]['net_sales_wtd'] : 0), 'currency'); ?></td>
-                                <td><?php echo XrgHelperFunctions::xrgFormatValue((!empty($weeklyData[$location]['var_bgt_sale']) ? $weeklyData[$location]['var_bgt_sale'] : 0), 'currency'); ?></td>
-                                <td><?php echo XrgHelperFunctions::xrgFormatValue((!empty($weeklyData[$location]['net_profit']) ? $weeklyData[$location]['net_profit'] : 0), 'currency'); ?></td>
-                                <td><?php echo XrgHelperFunctions::xrgFormatValue((!empty($weeklyData[$location]['var_bgt_net_profit']) ? $weeklyData[$location]['var_bgt_net_profit'] : 0), 'currency'); ?></td>
-                                <td><?php echo XrgHelperFunctions::xrgFormatValue(($weeklyData[$location]['var_bgt_net_profit'] / $weeklyData[$location]['var_bgt_sale'] * 100), 'percentage'); ?></td>
-                                <td><?php echo XrgHelperFunctions::xrgFormatValue((!empty($weeklyData[$location]['theo_food_var']) ? $weeklyData[$location]['theo_food_var'] : 0), 'percentage'); ?></td>
-                                <td><?php echo XrgHelperFunctions::xrgFormatValue((!empty($weeklyData[$location]['theo_liq_var']) ? $weeklyData[$location]['theo_liq_var'] : 0), 'percentage'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($netSaleTemp, 'currency'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($bdgtSaleTemp, 'currency'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($netProfitTemp, 'currency'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($bdgtProfitTemp, 'currency'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue(($bdgtSaleTemp > 0) ? ($bdgtProfitTemp / $bdgtSaleTemp * 100) : 'INF', 'percentage'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($tFoodVarTemp, 'percentage'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($tLiquorVarTemp, 'percentage'); ?></td>
                                 <td><?php echo $weeklyData[$location]['end_food_inv']; ?></td>
                                 <td><?php echo $weeklyData[$location]['end_liq_inv']; ?></td>
-                                <td><?php echo XrgHelperFunctions::xrgFormatValue((!empty($weeklyData[$location]['theo_labor_wtd']) ? $weeklyData[$location]['theo_labor_wtd'] : 0), 'percentage'); ?></td>
-                                <td><?php echo XrgHelperFunctions::xrgFormatValue((!empty($weeklyData[$location]['training_pay_wtd']) ? $weeklyData[$location]['training_pay_wtd'] : 0), 'currency'); ?></td>
-                                <td class="weekly-budget"><?php echo XrgHelperFunctions::xrgFormatValue((!empty($weeklyData[$location]['training_weekly_bgt']) ? $weeklyData[$location]['training_weekly_bgt'] : 0), 'currency'); ?></td>
-                                <td><?php echo XrgHelperFunctions::xrgFormatValue(($weeklyData[$location]['training_pay_wtd'] - $weeklyData[$location]['training_weekly_bgt']), 'currency'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($tLaborWTDTemp, 'percentage'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue($trainingPayTemp, 'currency'); ?></td>
+                                <td class="weekly-budget"><?php echo XrgHelperFunctions::xrgFormatValue($trainingWeeklyTemp, 'currency'); ?></td>
+                                <td><?php echo XrgHelperFunctions::xrgFormatValue(($trainingPayTemp - $trainingWeeklyTemp), 'currency'); ?></td>
                             </tr>
                         <?php endforeach; ?>
                         <!--  TOTALs  -->
@@ -150,7 +168,7 @@ get_header();
                             <td><?php echo XrgHelperFunctions::xrgFormatValue($varBudgetSale, 'currency'); ?></td>
                             <td><?php echo XrgHelperFunctions::xrgFormatValue($netProfit, 'currency'); ?></td>
                             <td><?php echo XrgHelperFunctions::xrgFormatValue($varBudgetProfit, 'currency'); ?></td>
-                            <td><?php echo XrgHelperFunctions::xrgFormatValue($flowThru, 'percentage'); ?></td>
+                            <td><?php echo XrgHelperFunctions::xrgFormatValue(($varBudgetProfit / $varBudgetSale), 'percentage'); ?></td>
                             <td><?php echo XrgHelperFunctions::xrgFormatValue(($tFoodVar / $totalLocation), 'percentage'); ?></td>
                             <td><?php echo XrgHelperFunctions::xrgFormatValue(($tLiquorVar / $totalLocation), 'percentage'); ?></td>
                             <td><?php echo $foodInv; ?></td>

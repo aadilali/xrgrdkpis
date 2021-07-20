@@ -51,7 +51,6 @@ class XrgKPIsDB
         $regionName = $pObj['xrg_region'];
         $dataType = $pObj['xrg_data_type'];
 
-        unset( $pObj['xrg_kpis_data_submit'] );
         unset( $pObj['xrg_period'] );
         unset( $pObj['xrg_region'] );
         unset( $pObj['xrg_data_type'] );
@@ -62,7 +61,8 @@ class XrgKPIsDB
         }
 
         if( $dataType === 'labor' ) {
-            $weeklyLabor[]['weeklyLabor'] = $pObj;
+            $weeklyLabor[XrgHelperFunctions::xrgFormatArrayKeys($pObj['xrg_week'])] = $pObj;
+            //$weeklyLabor[]['weeklyLabor'] = $pObj;
         }
 
         // Get Previous stored data if any
@@ -147,8 +147,10 @@ class XrgKPIsDB
         }
 
         if( $dataType === 'labor' ) {
-          //  $dataColumns['weekly_labor_data'] = 
-          //  $dataFormat[] = '%s';
+            $tempData = unserialize($existingLaborData);
+            $tempData = array_merge( $tempData, $weeklyLaborData );
+            $dataColumns = ['weekly_labor_data' => serialize( $tempData )];
+            $dataFormat = [ '%s' ];
         }
 
         //$dataColumns = [ 'weekly_kpis_data' => $weeklyKpiData, 'weekly_labor_data' => $weeklyLaborData ];

@@ -7,12 +7,14 @@ get_header();
 
 // KPIs Form Data
 if(isset($_POST['xrg_kpis_data_submit']) && $_POST['xrg_kpis_data_submit'] === 'SAVE') {
+    unset( $_POST['xrg_kpis_data_submit'] );
     XrgRdKpis::instance()->xrgDBInstance()->xrgSaveDataToDB($_POST);
 }
 
 // Labor Form Data
 if(isset($_POST['xrg_labor_data_submit']) && $_POST['xrg_labor_data_submit'] === 'SAVE') {
-    print_r($_POST);
+    unset( $_POST['xrg_labor_data_submit'] );
+    XrgRdKpis::instance()->xrgDBInstance()->xrgSaveDataToDB($_POST);
 }
 
 // Locations in a region
@@ -33,7 +35,7 @@ $currentWeek = ceil((date("d",strtotime('today')) - date("w",strtotime('today'))
             <h2>KPIs DATA FORM</h2>
             <form method="post" action="" id="labor_sheet">
                 <input type="hidden" name="xrg_region" value="ASantana" />
-                <input type="hidden" name="xrg_data_type" value="labor" />
+                <input type="hidden" name="xrg_data_type" value="kpis" />
                 <div class="flex-body">
                     <div class="flex-col-form">
                         <span class="heading_text">
@@ -181,7 +183,7 @@ $currentWeek = ceil((date("d",strtotime('today')) - date("w",strtotime('today'))
             <h2>LABOR FORECAST DATA FORM</h2>
             <form method="post" action="" id="kpi_sheet">
                 <input type="hidden" name="xrg_region" value="ASantana" />
-                <input type="hidden" name="xrg_data_type" value="kpis" />
+                <input type="hidden" name="xrg_data_type" value="labor" />
                 <div class="flex-body">
                     <div class="flex-col-form">
                         <span class="heading_text">
