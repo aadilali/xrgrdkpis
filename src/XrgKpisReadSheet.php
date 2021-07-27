@@ -148,6 +148,8 @@ class XrgKpisReadSheet
             // cell's data
             $cellIndex = 1;
             $contentStartIndex = 3;
+            $cellLabor = 1;
+            $contentStartIndexLabor = 3;
             $finalTotal = [];
             
             $weeklyKpisData = unserialize($sheetObj->weekly_kpis_data);
@@ -162,7 +164,7 @@ class XrgKpisReadSheet
             // Create Sheet with Data
             foreach($weeklyKpisData as $keyName => $weeklyData) {
                 $currentSheet->mergeCells("B$cellIndex:V$cellIndex");
-                $currentSheet = $this->xrgSetSheetHead($currentSheet, $weeklyData['xrg_week'], $cellIndex);
+                $currentSheet = $this->xrgSetSheetKPIHead($currentSheet, $weeklyData['xrg_week'], $cellIndex);
                 $cellIndex++;
 
                 foreach($weeklyData['xrg_locations'] as $location) {
@@ -234,7 +236,7 @@ class XrgKpisReadSheet
            // Create KPIs Till Date Section
             $cellIndex += 2;
             $currentSheet->mergeCells("B$cellIndex:V$cellIndex");
-            $currentSheet = $this->xrgSetSheetHead($currentSheet, 'KPI Period to Date', $cellIndex);
+            $currentSheet = $this->xrgSetSheetKPIHead($currentSheet, 'KPI Period to Date', $cellIndex);
 
             // cell's data
             $cellIndex++;
@@ -288,6 +290,53 @@ class XrgKpisReadSheet
             $currentSheet->getStyle("B$contentStartIndex:S$contentLastIndex")->applyFromArray($dottedStyle);
             $currentSheet->getStyle("B$cellIndex:S$cellIndex")->applyFromArray($genericStyle);
 
+            // Set Labor Data
+            if(!empty($sheetObj->weekly_labor_data)) {
+                $weeklyLaborData = unserialize($sheetObj->weekly_labor_data);
+                foreach($weeklyLaborData as $keyName => $weeklyLaborData) {
+                    $currentSheet->mergeCells("X$cellLabor:AH$cellLabor");
+                    $currentSheet = $this->xrgSetSheetLaborHead($currentSheet, $weeklyLaborData['xrg_week'], $cellLabor);
+                    $cellLabor++;
+
+                    foreach($weeklyLaborData['xrg_locations'] as $laborLocation) {
+                        $cellLabor++;
+                        $currentSheet->setCellValue("X$cellLabor", $laborLocation);
+
+                        // Format location name to use as array keys
+                        $laborLocation = XrgHelperFunctions::xrgFormatArrayKeys($laborLocation);
+
+                        $currentSheet->setCellValue("Y$cellLabor", $weeklyLaborData[$laborLocation]['forecasted_sales']);
+                        $currentSheet->setCellValue("AB$cellLabor", ($weeklyLaborData[$laborLocation]['forecasted_labor'] / 100));
+                        $currentSheet->setCellValue("AC$cellLabor", ($weeklyLaborData[$laborLocation]['budgeted_labor'] / 100));
+                        $currentSheet->setCellValue("AD$cellLabor", "=(AB$cellLabor - AC$cellLabor)");  //=AB3-AC3        
+                        $currentSheet->setCellValue("AE$cellLabor", ($weeklyLaborData[$laborLocation]['theo_labor'] / 100));
+                        $currentSheet->setCellValue("AF$cellLabor", $weeklyLaborData[$laborLocation]['scheduled_leader_hours']);
+                        $currentSheet->setCellValue("AG$cellLabor", $weeklyLaborData[$laborLocation]['budgeted_leader_hours']);
+                        $currentSheet->setCellValue("AH$cellLabor", "=(AF$cellLabor - AG$cellLabor)");  // =AF3-AG3
+                    }
+                    
+                    // Totals 
+                    $contentLastIndexLabor = $cellLabor;
+                    $cellLabor++;
+                    $currentSheet->setCellValue("X$cellLabor", 'Total');
+                    $currentSheet->setCellValue("Y$cellLabor", "=SUM(Y$contentStartIndexLabor:Y$contentLastIndexLabor)");  //=SUM
+                    $currentSheet->setCellValue("AB$cellLabor", "=AVERAGE(AB$contentStartIndexLabor:AB$contentLastIndexLabor)");  //=AVERAGE
+                    $currentSheet->setCellValue("AC$cellLabor", "=AVERAGE(AC$contentStartIndexLabor:AC$contentLastIndexLabor)");  //=AVERAGE
+                    $currentSheet->setCellValue("AD$cellLabor", "=(AC$cellLabor - AB$cellLabor)");  //=AC12-AB12
+                    $currentSheet->setCellValue("AE$cellLabor", "=AVERAGE(AE$contentStartIndexLabor:AE$contentLastIndexLabor)");  // =AVERAGE
+                    $currentSheet->setCellValue("AF$cellLabor", "=SUM(AF$contentStartIndexLabor:AF$contentLastIndexLabor)"); // =Sum
+                    $currentSheet->setCellValue("AG$cellLabor", "=SUM(AG$contentStartIndexLabor:AG$contentLastIndexLabor)");  // =Sum
+                    $currentSheet->setCellValue("AH$cellLabor", "=(AF$cellLabor - AG$cellLabor)");   // =AF12-AG12
+            
+                    $currentSheet->getStyle("X$cellLabor:AH$cellLabor")->applyFromArray($genericStyle);
+                    $currentSheet->getStyle("X$contentStartIndexLabor:AH$contentLastIndexLabor")->applyFromArray($dottedStyle);
+
+                    $cellLabor++;
+                    $currentSheet->mergeCells("X$cellLabor:AH$cellLabor");
+                    $cellLabor++;
+                    $contentStartIndexLabor = $cellLabor + 2;
+                }
+            }
             // Set active worksheet and write to file
             $spreadsheet->setActiveSheetIndexByName($sheetObj->period_name);
         }
@@ -296,9 +345,8 @@ class XrgKpisReadSheet
         $writer->save( XRG_PLUGIN_PATH . 'data/ASantana.xlsx' );
     }
 
-    
     /**
-     * Create excel file from form data. Form data stored to DB as well
+     * Set sheet headings, format and style for KPIs data
      *
      * @since    0.1
      * @access   public
@@ -307,7 +355,7 @@ class XrgKpisReadSheet
      * @param   int $cellIndex cell index
      * @return    Worksheet
      */
-    public function xrgSetSheetHead(Worksheet $sheet, string $weekTitle, int $cellIndex): Worksheet
+    public function xrgSetSheetKPIHead(Worksheet $sheet, string $weekTitle, int $cellIndex): Worksheet
     {
         $headingIndex = $cellIndex + 1;
         
@@ -344,15 +392,18 @@ class XrgKpisReadSheet
         $sheet->getStyle("B$cellIndex")->getFont()->setSize('16');
 
         $sheet->getStyle('R')->applyFromArray($genericStyle);
+        $sheet->getStyle('W')->applyFromArray($genericStyle);
 
         $sheet->getStyle("A$cellIndex:V$headingIndex")->applyFromArray($headingArray);
         $sheet->getStyle("B$headingIndex:V$headingIndex")->applyFromArray($bgColor);
         $sheet->getStyle('A2:V2')->getFont()->setSize(11);
         
-        foreach (range('B','V') as $col) {
+        foreach (range('B','Z') as $col) {
             $sheet->getColumnDimension($col)->setWidth(18, 'px');
         }
         
+        $sheet->getColumnDimension('A')->setWidth(4, 'px');
+
         $arrayData = [
             ['RD', 'Net Sales $ WTD', 'Var - Budgeted $ Sales', 'Net Profit $', 'Var - Budgeted Net Profit',
              'Flow Thru %' , 'LBWs vs PY Quantity', 'Guest Sat', 'Mystery Shopper', 'Theo Food Variance', 'Theo Liquor Variance',
@@ -367,6 +418,7 @@ class XrgKpisReadSheet
                 "B$headingIndex"         // Top left coordinate of the worksheet range where
         );
 
+        // Hide empty columns 
         $sheet->getColumnDimension('H')->setVisible(false);
         $sheet->getColumnDimension('I')->setVisible(false);
         $sheet->getColumnDimension('J')->setVisible(false);
@@ -382,6 +434,89 @@ class XrgKpisReadSheet
         $sheet->getStyle('K:L')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_PERCENTAGE_00);
         $sheet->getStyle('O')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_PERCENTAGE_00);
         $sheet->getStyle('S')->getNumberFormat()->setFormatCode('$#,##0.00_);[Red]($#,##0.00)');
+
+        return $sheet;
+    }
+
+    /**
+     * Set sheet headings, format and style for labor forecast data
+     *
+     * @since    0.1
+     * @access   public
+     * @param   Worksheet $sheet current active sheet in memory
+     * @param   string $weekTitle week title
+     * @param   int $cellIndex cell index
+     * @return    Worksheet
+     */
+    public function xrgSetSheetLaborHead(Worksheet $sheet, string $weekTitle, int $cellIndex): Worksheet
+    {
+        $headingIndex = $cellIndex + 1;
+        
+        $headingArray = [
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ]
+        ];
+
+        $bgColor = [
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => array('argb' => 'ffd9d9d9')
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['argb' => '00000000'],
+                ]
+            ]
+        ];
+
+        $genericStyle = [
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => array('argb' => 'ffbfbfbf')
+            ]
+        ];
+        
+        $sheet->setCellValue("X$cellIndex", $weekTitle . ' Forecasted Labor');
+        $sheet->getStyle("X$cellIndex")->getFont()->setBold(true);
+        $sheet->getStyle("X$cellIndex")->getFont()->setSize('16');
+
+        $sheet->getStyle("X$cellIndex:AH$headingIndex")->applyFromArray($headingArray);
+        $sheet->getStyle("X$headingIndex:AH$headingIndex")->applyFromArray($bgColor);
+        $sheet->getStyle('X2:AH2')->getFont()->setSize(11);
+        
+        $sheet->getColumnDimension('AA')->setWidth(18, 'px');
+        $sheet->getColumnDimension('AB')->setWidth(18, 'px');
+        $sheet->getColumnDimension('AC')->setWidth(18, 'px');
+        $sheet->getColumnDimension('AD')->setWidth(18, 'px');
+        $sheet->getColumnDimension('AE')->setWidth(18, 'px');
+        $sheet->getColumnDimension('AF')->setWidth(18, 'px');
+        $sheet->getColumnDimension('AG')->setWidth(18, 'px');
+        $sheet->getColumnDimension('AH')->setWidth(18, 'px');
+
+        $arrayData = [
+            [$weekTitle, 'Forecasted Sales', 'Budgeted Sales', 'Difference', 'Forecasted Labor %', 'Budgeted Labor %', 'Difference',
+             'Projected Theoretical Labor' , 'Scheduled Shift Leader Hours', 'Budgeted Shift Leader Hours', 'Difference'
+            ]
+        ];
+
+        $sheet->fromArray(
+                $arrayData,  // The data to set
+                NULL,        // Array values with this value will not be set
+                "X$headingIndex"         // Top left coordinate of the worksheet range where
+        );
+
+        // Hide empty columns 
+        $sheet->getColumnDimension('Z')->setVisible(false);
+        $sheet->getColumnDimension('AA')->setVisible(false);
+
+        // Format Cells accoring to there heads
+        $sheet->getStyle('Y')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_CURRENCY_USD_SIMPLE);
+        $sheet->getStyle('AB:AE')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_PERCENTAGE_00);
+        $sheet->getStyle('AH')->getNumberFormat()->setFormatCode('#,##0.00_);[Red](#,##0.00)');
 
         return $sheet;
     }

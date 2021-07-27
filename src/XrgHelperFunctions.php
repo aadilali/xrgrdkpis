@@ -60,7 +60,7 @@ final class XrgHelperFunctions
         } elseif($xrgFormat === 'percentage') {
             $formattedNumber = '<span>'. number_format($xrgNumber, 2, '.' ,',') .'%</span>';
         } elseif($xrgFormat === 'abs-numeric') {
-            $formattedNumber = '<span class="color-red">'. abs($xrgNumber) .'</span>';
+            $formattedNumber = ($xrgNumber < 0) ? '<span class="color-red">'. abs($xrgNumber) .'</span>' : '<span>'. $xrgNumber .'</span>';
         } else {
             return (string) $xrgNumber;
         }
