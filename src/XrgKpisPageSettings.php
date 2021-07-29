@@ -40,9 +40,9 @@ class XrgKpisPageSettings
         add_filter('template_include', [$this, 'xrgLoadTemplate'], 20);
         add_filter('query_vars', [$this, 'registerQueryVars']);
 
-        // Flush Parmalink Cache
-        register_activation_hook( XRG_PLUGIN_PATH.'xrg-rd-kpis.php', [$this, 'xrgParmalinkOption'] );
-        register_deactivation_hook( XRG_PLUGIN_PATH.'xrg-rd-kpis.php', [$this, 'xrgParmalinkOption'] );
+        // // Flush Parmalink Cache
+        // register_activation_hook( XRG_PLUGIN_PATH.'xrg-rd-kpis.php', [$this, 'xrgParmalinkOption'] );
+        // register_deactivation_hook( XRG_PLUGIN_PATH.'xrg-rd-kpis.php', [$this, 'xrgParmalinkOption'] );
     }
 
     /**
@@ -103,18 +103,5 @@ class XrgKpisPageSettings
     {
         $vars[] = 'xrg_kpi_page';
         return $vars;
-    }
-
-    /**
-     * Update option settings against parmalink flush cache
-     *
-     * @since    0.1
-     * @access   public
-     * @return void
-     *
-     */
-    public function xrgParmalinkOption(): void
-    {
-        update_option('plugin_permalinks_flushed', 0);
     }
 }

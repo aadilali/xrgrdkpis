@@ -7,14 +7,26 @@ get_header();
 
 // KPIs Form Data
 if(isset($_POST['xrg_kpis_data_submit']) && $_POST['xrg_kpis_data_submit'] === 'SAVE') {
-    unset( $_POST['xrg_kpis_data_submit'] );
-    XrgRdKpis::instance()->xrgDBInstance()->xrgSaveDataToDB($_POST);
+    
+    //Verify Nounce
+    if ( isset( $_POST['xrg_verify_kpis'] ) || wp_verify_nonce( $_POST['xrg_verify_kpis'], 'xrg_verify_kpis_data' ) ) {
+        
+        unset( $_POST['xrg_kpis_data_submit'] );
+        XrgRdKpis::instance()->xrgDBInstance()->xrgSaveDataToDB($_POST);
+        wp_redirect( site_url('/rd-view-sheet'));
+    }
 }
 
 // Labor Form Data
 if(isset($_POST['xrg_labor_data_submit']) && $_POST['xrg_labor_data_submit'] === 'SAVE') {
-    unset( $_POST['xrg_labor_data_submit'] );
-    XrgRdKpis::instance()->xrgDBInstance()->xrgSaveDataToDB($_POST);
+   
+     //Verify Nounce
+     if ( isset( $_POST['xrg_verify_labor'] ) || wp_verify_nonce( $_POST['xrg_verify_labor'], 'xrg_verify_labor_data' ) ) {
+       
+        unset( $_POST['xrg_labor_data_submit'] );
+        XrgRdKpis::instance()->xrgDBInstance()->xrgSaveDataToDB($_POST);
+        wp_redirect( site_url('/rd-view-sheet'));
+    }
 }
 
 // Locations in a region
@@ -33,9 +45,10 @@ $currentWeek = ceil((date("d",strtotime('today')) - date("w",strtotime('today'))
         <!-- LABOR FORECAST FORM  -->
         <div id="kpis_data_form" class="period-tab-content">
             <h2>KPIs DATA FORM</h2>
-            <form method="post" action="" id="labor_sheet">
+            <form method="post" action="" id="kpi_sheet">
                 <input type="hidden" name="xrg_region" value="ASantana" />
                 <input type="hidden" name="xrg_data_type" value="kpis" />
+                <?php wp_nonce_field( 'xrg_verify_kpis_data', 'xrg_verify_kpis' ); ?>
                 <div class="flex-body">
                     <div class="flex-col-form">
                         <span class="heading_text">
@@ -181,9 +194,10 @@ $currentWeek = ceil((date("d",strtotime('today')) - date("w",strtotime('today'))
         <!-- LABOR FORECAST FORM  -->
         <div id="labor_data_form" class="period-tab-content">
             <h2>LABOR FORECAST DATA FORM</h2>
-            <form method="post" action="" id="kpi_sheet">
+            <form method="post" action="" id="labor_sheet">
                 <input type="hidden" name="xrg_region" value="ASantana" />
                 <input type="hidden" name="xrg_data_type" value="labor" />
+                <?php wp_nonce_field( 'xrg_verify_labor_data', 'xrg_verify_labor' ); ?>
                 <div class="flex-body">
                     <div class="flex-col-form">
                         <span class="heading_text">
@@ -289,7 +303,7 @@ $currentWeek = ceil((date("d",strtotime('today')) - date("w",strtotime('today'))
 
         <!--  Tabs Button  -->
         <div class="tabs-btn-wrapper">
-            <button class="periods-tab entry-template-tabs" data-period-id="kpis_data_form" >KPIs Data</button>
+            <button class="periods-tab entry-template-tabs active-tab" data-period-id="kpis_data_form" >KPIs Data</button>
             <button class="periods-tab entry-template-tabs" data-period-id="labor_data_form" >Labor Forecast Data</button>
         </div>
 

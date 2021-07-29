@@ -22,7 +22,6 @@
 
         // Get the element with id="defaultOpen" and click on it
         $(".view-template-tabs").last().click();
-        $(".entry-template-tabs").first().click();
 
         // Labor Form week selector
         $('#week-value').text($('.labor-form-week').val());

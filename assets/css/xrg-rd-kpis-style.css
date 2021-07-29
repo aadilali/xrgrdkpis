@@ -299,3 +299,17 @@ input.btn:hover, .btn-transfer:hover, .span-btn:hover {
     border-top: none;
     top: -2px;
 }
+
+/*  File Upload Section  */
+.xrg-file-data {
+    width: 50%;
+    margin: 0 auto;
+}
+.xrg-file-data .flex-col-form {
+    padding: 30px;
+}
+span.full-width.input-description {
+    width: 100%;
+    font-size: 12px;
+    color: #333;
+}

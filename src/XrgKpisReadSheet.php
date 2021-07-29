@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 namespace XRG\RD;
 
+use Exception;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -53,20 +54,24 @@ class XrgKpisReadSheet
      */
     public function xrgLoadSheet(): Spreadsheet
     {
-        $sheetFile = XRG_PLUGIN_PATH . 'data/Antonio-RD-KPI-2021.xlsx';
+        // $pool = new CacheItemPoolInterface();
+        // $simpleCache = new SimpleCacheBridge($pool);
+
+        // \PhpOffice\PhpSpreadsheet\Settings::setCache($simpleCache);
+
+        $sheetFile = XRG_PLUGIN_PATH . 'original-file/xrg-original-sheet-data.xlsx';
         return IOFactory::load($sheetFile);
     }
 
     public function xrgWriteHtmlTable(): void
     {
         $spsheet = $this->xrgLoadSheet();
-        $spsheet->setActiveSheetIndexByName('Period 1');
-        echo $spsheet->getActiveSheetIndex();
+       // $spsheet->setActiveSheetIndexByName('Lookup');
         
-        $worksheet = $spsheet->getActiveSheet();
+        $worksheet = $spsheet->getSheet(1);
 
         echo '<table>' . PHP_EOL;
-        foreach ($worksheet->getRowIterator() as $row) {
+        foreach ($worksheet->getRowIterator() as $rowIndex => $row) {
             echo '<tr>' . PHP_EOL;
             $cellIterator = $row->getCellIterator();
             $cellIterator->setIterateOnlyExistingCells(FALSE); // This loops through all cells,
@@ -75,17 +80,17 @@ class XrgKpisReadSheet
                                                             //    only when their value is set.
                                                             // If this method is not called,
                                                             //    the default value is 'false'.
-            foreach ($cellIterator as $cell) {
-                if($cell->getValue() == 'Huntington Beach') {
-                    
-                }
+            foreach ($cellIterator as $key => $cell) {
                 echo '<td>' .
-                    $cell->getValue() .
+                $rowIndex.$key. ' Key => val ' .$cell->getValue() .
                     '</td>' . PHP_EOL;
             }
             echo '</tr>' . PHP_EOL;
         }
         echo '</table>' . PHP_EOL;
+
+        $spsheet->disconnectWorksheets();
+        unset($spsheet);
        /* $writer = new \PhpOffice\PhpSpreadsheet\Writer\Html($spsheet);
         $writer->setSheetIndex($spsheet->getActiveSheetIndex()); 
         $hdr = $writer->generateHTMLHeader();
@@ -341,8 +346,35 @@ class XrgKpisReadSheet
             $spreadsheet->setActiveSheetIndexByName($sheetObj->period_name);
         }
 
+        // Embed Orignal File work sheets
+
+        $originalFile = $this->xrgLoadSheet();
+        
+       // $clonedLookup = clone $originalFile->getSheet(0);
+       // $spreadsheet->addExternalSheet($clonedLookup);
+       
+        // try {
+        //     $clonedOriginal = clone $originalFile->getSheet(0);
+        //     $spreadsheet->addExternalSheet($clonedOriginal);
+        // } catch (Exception $e) {
+        //     print_r($e);
+        // }
+        $orgSheet = $originalFile->getSheet(0);
+       
+        $clonedOriginal = $this->xrgSetSheetOriginal($orgSheet);
+        //$spreadsheet->addSheet($clonedOriginal);
+
+      //  $originalFile->disconnectWorksheets();
+        //unset($originalFile);
+        
         $writer = new Xlsx($spreadsheet);
         $writer->save( XRG_PLUGIN_PATH . 'data/ASantana.xlsx' );
+
+        // Clear memory
+        $spreadsheet->disconnectWorksheets();
+        unset($spreadsheet);
+        
+
     }
 
     /**
@@ -472,13 +504,6 @@ class XrgKpisReadSheet
                 ]
             ]
         ];
-
-        $genericStyle = [
-            'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => array('argb' => 'ffbfbfbf')
-            ]
-        ];
         
         $sheet->setCellValue("X$cellIndex", $weekTitle . ' Forecasted Labor');
         $sheet->getStyle("X$cellIndex")->getFont()->setBold(true);
@@ -519,5 +544,98 @@ class XrgKpisReadSheet
         $sheet->getStyle('AH')->getNumberFormat()->setFormatCode('#,##0.00_);[Red](#,##0.00)');
 
         return $sheet;
+    }
+
+    /**
+     * Set Original Sheet format, style and Formulas
+     *
+     * @since    0.1
+     * @access   public
+     * @param   Worksheet $sheet current active sheet in memory
+     * @return    Worksheet
+     */
+    public function xrgSetSheetOriginal(Worksheet $sheet): Worksheet
+    {
+        
+        $headingArray = [
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => array('argb' => 'ffbfd2e2')
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                    'color' => ['argb' => 'ff608bb4'],
+                ]
+            ],
+            'font' => [
+                'size' => '14',
+                'name' => 'Tahoma',
+                'bold' => true,
+                'italic' => false,
+            ]
+        ];
+
+        $genericStyle = [
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_RIGHT,
+                'vertical' => Alignment::VERTICAL_TOP,
+                'wrapText' => true,
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => array('argb' => 'ffffffff')
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                    'color' => ['argb' => 'ffd9d9d9'],
+                ]
+            ],
+            'font' => [
+                'size' => '8',
+                'name' => 'Tahoma',
+                'bold' => false,
+                'italic' => false,
+            ]
+        ];
+
+        $tempSheet = new Worksheet(null, 'Original');
+       
+        foreach ($sheet->getRowIterator() as $rowIndex => $row) {
+            
+            $cellIterator = $row->getCellIterator();
+            $cellIterator->setIterateOnlyExistingCells(TRUE); // This loops through all cells,
+                                                            //    even if a cell value is not set.
+                                                            // For 'TRUE', we loop through cells
+                                                            //    only when their value is set.
+                                                            // If this method is not called,
+                                                            //    the default value is 'false'.
+           
+            foreach ($cellIterator as $coordinate => $cell) {
+                
+               $tempSheet->setCellValue($rowIndex.$coordinate, $cell->getValue());
+               wp_die('TESTES33s');
+            }
+        }
+
+      /*  $totalIndex = count($tempSheet->toArray());
+        $tempSheet->getStyle("A1:O1")->applyFromArray($headingArray);
+        $tempSheet->getStyle("A2:O$totalIndex")->applyFromArray($genericStyle);
+        
+        $tempSheet->getColumnDimension("A1:O$totalIndex")->setWidth(18, 'px');*/
+
+
+        // Format Cells accoring to there heads
+       /* $sheet->getStyle('Y')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_CURRENCY_USD_SIMPLE);
+        $sheet->getStyle('AB:AE')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_PERCENTAGE_00);
+        $sheet->getStyle('AH')->getNumberFormat()->setFormatCode('#,##0.00_);[Red](#,##0.00)');*/
+
+        return $tempSheet;
     }
 }

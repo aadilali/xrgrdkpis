@@ -15,6 +15,8 @@
     ],
     "minimum-stability": "stable",
     "require": {
-        "phpoffice/phpspreadsheet": "^1.18"
+        "phpoffice/phpspreadsheet": "^1.18",
+        "cache/apcu-adapter": "^1.1",
+        "cache/simple-cache-bridge": "^1.1"
     }
 }

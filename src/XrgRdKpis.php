@@ -44,6 +44,9 @@ class XrgRdKpis
 
         $this->xrgRdKpisInstances('rd-entry-sheet', 'xrg-data-collection-template');
         $this->xrgRdKpisInstances('rd-view-sheet', 'xrg-data-view-template');
+
+        // File upload endpoint
+        $this->xrgRdKpisInstances('rd-file-upload', 'xrg-original-file-upload-template');
         
         // Enqueue Style and Scripts
         add_action( 'wp_enqueue_scripts', [$this, 'xrgLoadScripts'] );

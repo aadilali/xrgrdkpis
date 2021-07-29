@@ -82,4 +82,23 @@ final class XrgHelperFunctions
             return array_fill_keys($tempKeys, 0);
         }
     }
+
+    /**
+     * Save file to specific folder uploaded from front-end
+     * @since    0.1
+     * @access   public
+     * @param array $pObj type of array data submitted through form
+     * @return string bool file uploaded or not
+     */ 
+    public static function xrgHandleFileUpload(array $pObj): bool
+    {
+        // Move and rename upload file to /original-file/xrg-original-sheet-data.xlsx directory
+        $allowed = ['xlsx'];
+        $ext = pathinfo($pObj['xrg_file']['name'], PATHINFO_EXTENSION);
+        if (!in_array($ext, $allowed)) {
+            return false;
+        }
+
+        return move_uploaded_file($pObj['xrg_file']['tmp_name'], XRG_PLUGIN_PATH . 'original-file/xrg-original-sheet-data.xlsx');
+    }
 }
