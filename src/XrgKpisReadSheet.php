@@ -349,23 +349,15 @@ class XrgKpisReadSheet
         // Embed Orignal File work sheets
 
         $originalFile = $this->xrgLoadSheet();
-        
-       // $clonedLookup = clone $originalFile->getSheet(0);
-       // $spreadsheet->addExternalSheet($clonedLookup);
-       
-        // try {
-        //     $clonedOriginal = clone $originalFile->getSheet(0);
-        //     $spreadsheet->addExternalSheet($clonedOriginal);
-        // } catch (Exception $e) {
-        //     print_r($e);
-        // }
-        $orgSheet = $originalFile->getSheet(0);
-       
-        $clonedOriginal = $this->xrgSetSheetOriginal($orgSheet);
-        //$spreadsheet->addSheet($clonedOriginal);
 
-      //  $originalFile->disconnectWorksheets();
-        //unset($originalFile);
+        $clonedOriginal = clone $originalFile->getSheet(1);
+        $spreadsheet->addExternalSheet($clonedOriginal);
+       
+        $clonedLookup = clone $originalFile->getSheet(0);
+        $spreadsheet->addExternalSheet($clonedLookup);
+
+        $originalFile->disconnectWorksheets();
+        unset($originalFile);
         
         $writer = new Xlsx($spreadsheet);
         $writer->save( XRG_PLUGIN_PATH . 'data/ASantana.xlsx' );
@@ -557,73 +549,28 @@ class XrgKpisReadSheet
     public function xrgSetSheetOriginal(Worksheet $sheet): Worksheet
     {
         
-        $headingArray = [
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER,
-                'wrapText' => true,
-            ],
-            'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => array('argb' => 'ffbfd2e2')
-            ],
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
-                    'color' => ['argb' => 'ff608bb4'],
-                ]
-            ],
-            'font' => [
-                'size' => '14',
-                'name' => 'Tahoma',
-                'bold' => true,
-                'italic' => false,
-            ]
-        ];
+        
+       /* $tempSheet = new Worksheet(null, 'Original');
 
-        $genericStyle = [
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_RIGHT,
-                'vertical' => Alignment::VERTICAL_TOP,
-                'wrapText' => true,
-            ],
-            'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => array('argb' => 'ffffffff')
-            ],
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
-                    'color' => ['argb' => 'ffd9d9d9'],
-                ]
-            ],
-            'font' => [
-                'size' => '8',
-                'name' => 'Tahoma',
-                'bold' => false,
-                'italic' => false,
-            ]
-        ];
-
-        $tempSheet = new Worksheet(null, 'Original');
+        $temp = 0;
        
         foreach ($sheet->getRowIterator() as $rowIndex => $row) {
-            
+            $temp++;
             $cellIterator = $row->getCellIterator();
-            $cellIterator->setIterateOnlyExistingCells(TRUE); // This loops through all cells,
-                                                            //    even if a cell value is not set.
-                                                            // For 'TRUE', we loop through cells
-                                                            //    only when their value is set.
-                                                            // If this method is not called,
-                                                            //    the default value is 'false'.
-           
+            $cellIterator->setIterateOnlyExistingCells(TRUE);
+
+            echo "<pre>";
             foreach ($cellIterator as $coordinate => $cell) {
-                
-               $tempSheet->setCellValue($rowIndex.$coordinate, $cell->getValue());
-               wp_die('TESTES33s');
+                echo $rowIndex.$coordinate;
+              // $tempSheet->setCellValue($rowIndex.$coordinate, $cell->getValue());
             }
+            echo "</pre>";
         }
 
+        echo "<pre>";
+        echo $temp;
+        echo "</pre>";
+        wp_die();*/
       /*  $totalIndex = count($tempSheet->toArray());
         $tempSheet->getStyle("A1:O1")->applyFromArray($headingArray);
         $tempSheet->getStyle("A2:O$totalIndex")->applyFromArray($genericStyle);
@@ -635,7 +582,22 @@ class XrgKpisReadSheet
        /* $sheet->getStyle('Y')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_CURRENCY_USD_SIMPLE);
         $sheet->getStyle('AB:AE')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_PERCENTAGE_00);
         $sheet->getStyle('AH')->getNumberFormat()->setFormatCode('#,##0.00_);[Red](#,##0.00)');*/
+        
+        $totalIndex = count($sheet->toArray());
 
-        return $tempSheet;
+        // for($i=2; $i <= $totalIndex; $i++) {
+            
+        //     $cellVal = '=IFERROR(VLOOKUP($J'.$i.',Lookup!$I:$M,Lookup!J$2,0),"")';
+        //     $sheet->setCellValue("K$i", $cellVal);
+        //     $sheet->getCell("K$i")->getStyle()->setQuotePrefix(true);
+
+        // }
+        
+        
+        foreach( range('A', 'O') as $col ) {
+            $sheet->getColumnDimension($col)->setWidth(20, 'px');
+        }
+        
+        return $sheet;
     }
 }
