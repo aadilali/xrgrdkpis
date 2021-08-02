@@ -29,6 +29,19 @@ if(isset($_POST['xrg_labor_data_submit']) && $_POST['xrg_labor_data_submit'] ===
     }
 }
 
+// Staffing Pars Data
+if(isset($_POST['xrg_staffing_pars_data_submit']) && $_POST['xrg_staffing_pars_data_submit'] === 'SAVE') {
+   
+    //Verify Nounce
+    if ( isset( $_POST['xrg_verify_staffing_pars'] ) || wp_verify_nonce( $_POST['xrg_verify_staffing_pars'], 'xrg_verify_staffing_pars_data' ) ) {
+      
+       unset( $_POST['xrg_staffing_pars_data_submit'] );
+     //  XrgRdKpis::instance()->xrgDBInstance()->xrgSaveDataToDB($_POST);
+     //  wp_redirect( site_url('/rd-view-sheet'));
+     print_r($_POST);
+   }
+}
+
 // Locations in a region
 $regionLocations = ['Huntington Beach', 'Anaheim', 'Irvine', 'Yorba Linda', 'Cypress'];
 
@@ -39,6 +52,8 @@ $currentMonth = date('m');
 $weekDetails = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5'];
 $currentWeek = ceil((date("d",strtotime('today')) - date("w",strtotime('today')) - 1) / 7) + 1;
 
+// Staffing Pars Types
+$staffingPars = ['Servers', 'Cocktail', 'Host', 'Bar', 'Bus', 'Expo', 'Cook', 'Prep', 'Dish'];
 ?>
 <div class="alignwide xrg-wrapper">
     <div class="flex-container-form xrg-kpi-data">
@@ -301,10 +316,168 @@ $currentWeek = ceil((date("d",strtotime('today')) - date("w",strtotime('today'))
             </form>
         </div>
 
+        <!-- STAFFING PARS DATA FORM  -->
+        <div id="staffing_pars_data_form" class="period-tab-content">
+            <h2>STAFFING PARS FORM</h2>
+            <form method="post" action="" id="staffing_pars_sheet">
+                <input type="hidden" name="xrg_region" value="ASantana" />
+                <input type="hidden" name="xrg_data_type" value="staffing_pars" />
+                <?php wp_nonce_field( 'xrg_verify_staffing_pars_data', 'xrg_verify_staffing_pars' ); ?>
+                
+                <?php foreach($regionLocations as $location) : ?>
+                <div class="location-staffing-container">
+                    <div class="flex-col-form">
+                        <span class="field_val">
+                            <input type="text" class="location-name" name="xrg_locations[]" value="<?php echo $location; ?>" readonly />
+                        </span>
+                    </div>
+                    <?php  $location = XrgHelperFunctions::xrgFormatArrayKeys($location); ?>
+                    <?php foreach($staffingPars as $staffingPar) : ?>
+                    <div class="staffing-type-row">   <!--  Reapter Row  -->
+
+                        <div class="flex-head">
+                            <div class="flex-col-form-head">
+                                <span class="heading_text"></span>
+                            </div>
+                            <div class="flex-col-form-head">
+                                <span class="heading_text"></span>
+                            </div>
+                            <div class="flex-col-form-head">
+                                <span class="heading_text">Mon</span>
+                            </div>
+                            <div class="flex-col-form-head">
+                                <span class="heading_text">Tues</span> 
+                            </div>
+                            <div class="flex-col-form-head">
+                                <span class="heading_text">Wed</span> 
+                            </div>
+                            <div class="flex-col-form-head">
+                                <span class="heading_text">Thurs</span> 
+                            </div>
+                            <div class="flex-col-form-head">
+                                <span class="heading_text">Fri</span> 
+                            </div>
+                            <div class="flex-col-form-head">
+                                <span class="heading_text">Sat</span> 
+                            </div>
+                            <div class="flex-col-form-head">
+                                <span class="heading_text">Sun</span> 
+                            </div>
+                        </div>
+
+                        <div class="flex-body">
+                            <div class="flex-body-left">
+                                <div class="flex-col-form">
+                                    <span class="field_val staffing-par-head">
+                                        <?php echo $staffingPar; ?>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="flex-body-right">
+                                <div class="flex-body-right-content">
+                                    <!-- AM DATA -->
+                                    <div class="flex-col-form">
+                                        <span class="field_val">
+                                            am
+                                        </span>
+                                    </div>
+                                    <div class="flex-col-form">
+                                        <span class="field_val">
+                                            <input type="text" name="<?php echo $location . '[' . $staffingPar . ']'; ?>[am][Mon]" value="0" />
+                                        </span>
+                                    </div>
+                                    <div class="flex-col-form">
+                                        <span class="field_val">
+                                            <input type="text" name="<?php echo $location . '[' . $staffingPar . ']'; ?>[am][Tues]" value="0" />
+                                        </span> 
+                                    </div>
+                                    <div class="flex-col-form">
+                                        <span class="field_val">
+                                            <input type="text" name="<?php echo $location . '[' . $staffingPar . ']'; ?>[am][Wed]" value="0" />
+                                        </span> 
+                                    </div>
+                                    <div class="flex-col-form">
+                                        <span class="field_val">
+                                            <input type="text" name="<?php echo $location . '[' . $staffingPar . ']'; ?>[am][Thurs]" value="0" />
+                                        </span> 
+                                    </div>
+                                    <div class="flex-col-form">
+                                        <span class="field_val">
+                                            <input type="text" name="<?php echo $location . '[' . $staffingPar . ']'; ?>[am][Fri]" value="0" />
+                                        </span>
+                                    </div>
+                                    <div class="flex-col-form">
+                                        <span class="field_val">
+                                            <input type="text" name="<?php echo $location . '[' . $staffingPar . ']'; ?>[am][Sat]" value="0" />
+                                        </span>
+                                    </div>
+                                    <div class="flex-col-form">
+                                        <span class="field_val">
+                                            <input type="text" name="<?php echo $location . '[' . $staffingPar . ']'; ?>[am][Sun]" value="0" />
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="flex-body-right-content">
+                                    <!-- PM DATA -->
+                                    <div class="flex-col-form">
+                                        <span class="field_val">
+                                            pm
+                                        </span>
+                                    </div>
+                                    <div class="flex-col-form">
+                                        <span class="field_val">
+                                            <input type="text" name="<?php echo $location . '[' . $staffingPar . ']'; ?>[pm][Mon]" value="0" />
+                                        </span>
+                                    </div>
+                                    <div class="flex-col-form">
+                                        <span class="field_val">
+                                            <input type="text" name="<?php echo $location . '[' . $staffingPar . ']'; ?>[pm][Tues]" value="0" />
+                                        </span> 
+                                    </div>
+                                    <div class="flex-col-form">
+                                        <span class="field_val">
+                                            <input type="text" name="<?php echo $location . '[' . $staffingPar . ']'; ?>[pm][Wed]" value="0" />
+                                        </span> 
+                                    </div>
+                                    <div class="flex-col-form">
+                                        <span class="field_val">
+                                            <input type="text" name="<?php echo $location . '[' . $staffingPar . ']'; ?>[pm][Thurs]" value="0" />
+                                        </span> 
+                                    </div>
+                                    <div class="flex-col-form">
+                                        <span class="field_val">
+                                            <input type="text" name="<?php echo $location . '[' . $staffingPar . ']'; ?>[pm][Fri]" value="0" />
+                                        </span>
+                                    </div>
+                                    <div class="flex-col-form">
+                                        <span class="field_val">
+                                            <input type="text" name="<?php echo $location . '[' . $staffingPar . ']'; ?>[pm][Sat]" value="0" />
+                                        </span>
+                                    </div>
+                                    <div class="flex-col-form">
+                                        <span class="field_val">
+                                            <input type="text" name="<?php echo $location . '[' . $staffingPar . ']'; ?>[pm][Sun]" value="0" />
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php endforeach; ?>
+                <div class="flex-button-body">
+                    <div class="flex-col-form border-none"><input type="submit" id="save_record" class="btn" name="xrg_staffing_pars_data_submit" value="SAVE" /></div>
+                </div>
+            </form>
+        </div>
+
         <!--  Tabs Button  -->
         <div class="tabs-btn-wrapper">
             <button class="periods-tab entry-template-tabs active-tab" data-period-id="kpis_data_form" >KPIs Data</button>
             <button class="periods-tab entry-template-tabs" data-period-id="labor_data_form" >Labor Forecast Data</button>
+            <button class="periods-tab entry-template-tabs" data-period-id="staffing_pars_data_form" >Staffing Pars</button>
         </div>
 
     </div>

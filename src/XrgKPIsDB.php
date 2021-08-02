@@ -47,6 +47,7 @@ class XrgKPIsDB
         
         $weeklyKPIs = [];
         $weeklyLabor = [];
+        $staffingPars = [];
         $periodName = $pObj['xrg_period'];
         $regionName = $pObj['xrg_region'];
         $dataType = $pObj['xrg_data_type'];
@@ -57,12 +58,14 @@ class XrgKPIsDB
 
         if( $dataType === 'kpis' ) {
             $weeklyKPIs[XrgHelperFunctions::xrgFormatArrayKeys($pObj['xrg_week'])] = $pObj;
-            //$weeklyKPIs[]['weeklyKPIs'] = $pObj;
         }
 
         if( $dataType === 'labor' ) {
             $weeklyLabor[XrgHelperFunctions::xrgFormatArrayKeys($pObj['xrg_week'])] = $pObj;
-            //$weeklyLabor[]['weeklyLabor'] = $pObj;
+        }
+
+        if( $dataType === 'staffing_pars' ) {
+            $staffingPars['xrg_staffing_pars'] = $pObj;
         }
 
         // Get Previous stored data if any
@@ -70,7 +73,7 @@ class XrgKPIsDB
         if( $exisitngData ) {
             $this->xrgUpdateWeeklyData( (int)$exisitngData->id, $exisitngData->weekly_kpis_data, $exisitngData->weekly_labor_data, $weeklyKPIs, $weeklyLabor, $dataType );
         } else {
-            $this->xrgInsertWeeklyData( $periodName, $regionName, $weeklyKPIs, $weeklyLabor );
+            $this->xrgInsertWeeklyData( $periodName, $regionName, $weeklyKPIs, $weeklyLabor, $staffingPars );
         }
 
     }
@@ -152,8 +155,6 @@ class XrgKPIsDB
             $dataColumns = ['weekly_labor_data' => serialize( $tempData )];
             $dataFormat = [ '%s' ];
         }
-
-        //$dataColumns = [ 'weekly_kpis_data' => $weeklyKpiData, 'weekly_labor_data' => $weeklyLaborData ];
         
         $dataWhere = [ 'id' => $id ];
         $whereFormat = [ '%d' ];

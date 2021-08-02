@@ -300,6 +300,48 @@ input.btn:hover, .btn-transfer:hover, .span-btn:hover {
     top: -2px;
 }
 
+/* STAFFING PARS  */
+.location-staffing-container {
+    padding: 5px;
+    border: 2px solid #12627B;
+    margin-bottom: 30px;
+}
+.location-staffing-container input.location-name {
+    border: none !important;
+    font-size: 18px;
+    font-weight: bold;
+}
+.location-staffing-container .staffing-type-row {
+    margin-left: 40px;
+    margin-bottom: 7px;
+}
+.flex-container-form .flex-body-left {
+    display: flex;
+    flex-grow: 1 !important;
+    flex-basis: 56px !important;
+    align-items: center;
+    border: 1px solid #12627B;
+}
+.flex-container-form .flex-body-left .flex-col-form {
+    border: none !important;
+}
+.flex-container-form .flex-body-right {
+    flex-grow: 11 !important;
+}
+.flex-container-form .flex-body-right .flex-body-right-content {
+    display: flex;
+}
+.flex-container-form .flex-body-left .staffing-par-head {
+    font-weight: bold;
+    font-size: 16px
+}
+.flex-body-right input {
+    line-height: 12px;
+    padding: 0;
+}
+.flex-container-form .flex-body-right > *, .flex-container-form .flex-body-right-content > * {
+    flex: 1 1 40px;
+}
 /*  File Upload Section  */
 .xrg-file-data {
     width: 50%;
