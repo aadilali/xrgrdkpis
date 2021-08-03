@@ -23,7 +23,9 @@ class XrgKPIsDB
      /**
      * @var string
      */
-    private $xrgTableName;
+    private $xrgKPIsTable;
+
+    private $xrgStaffingTable;
     
     /**
      * Initialize the class, set its properties and register callbacks against hooks.
@@ -31,7 +33,8 @@ class XrgKPIsDB
      */
     public function __construct()
     {
-        $this->xrgTableName = 'wp_xrg_kpis';
+        $this->xrgKPIsTable = 'wp_xrg_kpis';
+        $this->xrgStaffingTable = 'wp_xrg_staffing_pars';
     }
 
     /**
@@ -47,7 +50,6 @@ class XrgKPIsDB
         
         $weeklyKPIs = [];
         $weeklyLabor = [];
-        $staffingPars = [];
         $periodName = $pObj['xrg_period'];
         $regionName = $pObj['xrg_region'];
         $dataType = $pObj['xrg_data_type'];
@@ -64,16 +66,12 @@ class XrgKPIsDB
             $weeklyLabor[XrgHelperFunctions::xrgFormatArrayKeys($pObj['xrg_week'])] = $pObj;
         }
 
-        if( $dataType === 'staffing_pars' ) {
-            $staffingPars['xrg_staffing_pars'] = $pObj;
-        }
-
         // Get Previous stored data if any
         $exisitngData = $this->xrgGetWeeklyData( $periodName, $regionName );
         if( $exisitngData ) {
-            $this->xrgUpdateWeeklyData( (int)$exisitngData->id, $exisitngData->weekly_kpis_data, $exisitngData->weekly_labor_data, $weeklyKPIs, $weeklyLabor, $dataType );
+            $this->xrgUpdateWeeklyData((int)$exisitngData->id, $exisitngData->weekly_kpis_data, $exisitngData->weekly_labor_data, $weeklyKPIs, $weeklyLabor, $dataType);
         } else {
-            $this->xrgInsertWeeklyData( $periodName, $regionName, $weeklyKPIs, $weeklyLabor, $staffingPars );
+            $this->xrgInsertWeeklyData($periodName, $regionName, $weeklyKPIs, $weeklyLabor);
         }
 
     }
@@ -90,7 +88,7 @@ class XrgKPIsDB
     public function xrgGetWeeklyData(string $period, string $region)
     {
         global $wpdb;
-        return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $this->xrgTableName WHERE period_name = %s AND region_name = %s", $period, $region ) );
+        return $wpdb->get_row($wpdb->prepare("SELECT * FROM $this->xrgKPIsTable WHERE period_name = %s AND region_name = %s", $period, $region));
     }
 
     /**
@@ -104,10 +102,10 @@ class XrgKPIsDB
     public function xrgGetRegionalData(string $region)
     {
         global $wpdb;
-        return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $this->xrgTableName WHERE region_name = %s ORDER BY id ASC", $region ) );
+        return $wpdb->get_results($wpdb->prepare( "SELECT * FROM $this->xrgKPIsTable WHERE region_name = %s ORDER BY id ASC", $region));
     }
 
-     /**
+    /**
      * Insert new data to database 
      *
      * @since   0.1
@@ -121,13 +119,13 @@ class XrgKPIsDB
     {
         global $wpdb;
 
-        $dataColumns = [ 'period_name' => $period, 'region_name' => $region, 'weekly_kpis_data' => serialize( $weeklyKpiData ), 'weekly_labor_data' => serialize( $weeklyLaborData ) ];
-        $dataFormat = [ '%s','%s', '%s','%s' ];
+        $dataColumns = ['period_name' => $period, 'region_name' => $region, 'weekly_kpis_data' => serialize( $weeklyKpiData ), 'weekly_labor_data' => serialize( $weeklyLaborData )];
+        $dataFormat = ['%s','%s', '%s','%s'];
 
-        return $wpdb->insert( $this->xrgTableName, $dataColumns, $dataFormat );
+        return $wpdb->insert($this->xrgKPIsTable, $dataColumns, $dataFormat);
     }
 
-     /**
+    /**
      * update existing data to database
      *
      * @since    0.1
@@ -144,21 +142,93 @@ class XrgKPIsDB
         global $wpdb;
         if( $dataType === 'kpis' ) {
             $tempData = unserialize($existingKpiData);
-            $tempData = array_merge( $tempData, $weeklyKpiData );
+            $tempData = array_merge($tempData, $weeklyKpiData);
             $dataColumns = ['weekly_kpis_data' => serialize( $tempData )];
-            $dataFormat = [ '%s' ];
+            $dataFormat = ['%s'];
         }
 
         if( $dataType === 'labor' ) {
             $tempData = unserialize($existingLaborData);
             $tempData = array_merge( $tempData, $weeklyLaborData );
             $dataColumns = ['weekly_labor_data' => serialize( $tempData )];
-            $dataFormat = [ '%s' ];
+            $dataFormat = ['%s'];
         }
         
-        $dataWhere = [ 'id' => $id ];
-        $whereFormat = [ '%d' ];
+        $dataWhere = ['id' => $id];
+        $whereFormat = ['%d'];
 
-        return $wpdb->update( $this->xrgTableName, $dataColumns, $dataWhere, $dataFormat, $whereFormat );
+        return $wpdb->update( $this->xrgKPIsTable, $dataColumns, $dataWhere, $dataFormat, $whereFormat );
+    }
+
+    /**
+     * Get staffing data, here code decide to insert or update the data 
+     *
+     * @since   0.1
+     * @access   public
+     * @param   array $pObj array with submitted form data
+     * @return   void
+     */
+    public function xrgSaveStaffingToDB(array $pObj): void
+    {
+        
+        $staffingPars = [];
+        $regionName = $pObj['xrg_region'];
+
+        unset( $pObj['xrg_region'] );
+        $staffingPars = $pObj;
+
+        // Get Previous stored data if any
+        $exisitngData = $this->xrgStaffingParsData($regionName);
+        if($exisitngData) {
+            $this->xrgInsertStaffingPars((int)$exisitngData->id, '', $staffingPars, $exisitngData->staffing_data);
+        } else {
+            $this->xrgInsertStaffingPars(0, $regionName, $staffingPars, '');
+        }
+
+    }
+
+    /**
+     * Get data against Region name for Staffing Pars from database 
+     *
+     * @since   0.1
+     * @access   public
+     * @param   string $region Region name
+     * @return   object|null|void Comment object, otherwise false
+     */
+    public function xrgStaffingParsData(string $region)
+    {
+        global $wpdb;
+        return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $this->xrgStaffingTable WHERE region_name = %s", $region ) );
+    }
+
+    /**
+     * Insert Staffing data to database 
+     *
+     * @since   0.1
+     * @access   public
+     * @param   int $id id of staffing data in case of updating existing row
+     * @param   string $region Region name
+     * @param   array $staffingPars Post array having submitted form data about Staffing Pars
+     * @param   string $existingStaffingData Post array having existing data about Staffing Pars
+     */
+    public function xrgInsertStaffingPars(int $id=0, string $region, array $staffingPars, string $existingStaffingData)
+    {
+        global $wpdb;
+       
+        if($id) {  // Update existing staffing pars data
+            $tempData = unserialize($existingStaffingData);
+            $tempData = array_merge( $tempData, $staffingPars );
+            $dataColumns = ['staffing_data' => serialize( $tempData )];
+            $dataFormat = ['%s'];
+            $dataWhere = ['id' => $id];
+            $whereFormat = ['%d'];
+
+            return $wpdb->update( $this->xrgStaffingTable, $dataColumns, $dataWhere, $dataFormat, $whereFormat );
+        }
+
+        $dataColumns = ['region_name' => $region, 'staffing_data' => serialize( $staffingPars )];
+        $dataFormat = ['%s','%s'];
+
+        return $wpdb->insert( $this->xrgStaffingTable, $dataColumns, $dataFormat );
     }
 }

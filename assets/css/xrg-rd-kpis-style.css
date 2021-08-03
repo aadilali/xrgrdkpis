@@ -342,6 +342,10 @@ input.btn:hover, .btn-transfer:hover, .span-btn:hover {
 .flex-container-form .flex-body-right > *, .flex-container-form .flex-body-right-content > * {
     flex: 1 1 40px;
 }
+.flex-body-right-content .par-type-total-label {
+    font-weight: bold;
+}
+
 /*  File Upload Section  */
 .xrg-file-data {
     width: 50%;

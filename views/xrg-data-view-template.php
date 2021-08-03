@@ -11,7 +11,7 @@ if(isset($_GET['gen-sheet']) && $_GET['gen-sheet'] == 1) {
     if (file_exists($file)) {
         header('Content-Description: File Transfer');
         header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename="'.basename($file).'"');
+        header('Content-Disposition: filename="'.basename($file).'"');
         header('Expires: 0');
         header('Cache-Control: must-revalidate');
         header('Pragma: public');
@@ -21,8 +21,12 @@ if(isset($_GET['gen-sheet']) && $_GET['gen-sheet'] == 1) {
         echo 'file not found';
     }
 }
+
 // Get data from DB class
 $sheetData = XrgRdKpis::instance()->xrgDBInstance()->xrgGetRegionalData( 'ASantana' );
+// Get data from DB class
+$stafffingData = XrgRdKpis::instance()->xrgDBInstance()->xrgStaffingParsData( 'ASantana' );
+$stafffingData = unserialize($stafffingData->staffing_data);
 
 get_header();
 
@@ -374,18 +378,155 @@ get_header();
             </div>
         </div>
         <?php endforeach; ?>
-            <!--  Tabs Button  -->
-            <div class="tabs-btn-wrapper">
-            <?php
-                foreach($sheetData as $sheetObj) : 
-                    $period = XrgHelperFunctions::xrgFormatArrayKeys($sheetObj->period_name); 
-            ?>
-                <button class="periods-tab view-template-tabs" data-period-id="<?php echo $period; ?>" ><?php echo $sheetObj->period_name; ?></button>
-                <?php endforeach; ?>
+        <?php 
+        foreach($stafffingData['xrg_locations'] as $staffObj) : 
+            $sheetId = XrgHelperFunctions::xrgFormatArrayKeys($staffObj); 
+        ?>
+        <!-- TABS CONTENT FOR STAFFING PARS  -->
+        <div id="<?php echo $sheetId; ?>" class="period-tab-content">
+            <div class="xrg-table-container">
+                <!-- Main Table  -->
+                <table class="main-table-wrapper">
+                    <tr>
+                        <td class="table-containers">
+                            <table>
+                                <thead>
+                                    <tr class="weekly-heading">
+                                        <th colspan="5"></th>
+                                    </tr>
+                                    <tr>
+                                        <th><?php echo $staffObj; ?></th>
+                                        <th>Have</th>
+                                        <th>In Training</th>
+                                        <th>Par</th>
+                                        <th>Variance</th>
+
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    $haveValTotal = 0;
+                                    $inTrainingTotal = 0;
+                                    $parTotal = 0;
+                                    $maxTables = $stafffingData[$sheetId]['max_tables'];
+                                    unset($stafffingData[$sheetId]['max_tables']);
+                                    foreach($stafffingData[$sheetId] as $staffType => $staffVal ) :
+                                        $haveVal = 20;
+                                        $haveValTotal += $haveVal;
+                                        $inTrainingTotal += $staffType['in_training'];
+                                        $parTotal += $staffVal['total'];
+                                    ?>
+                                    <tr>
+                                        <td><?php echo $staffType; ?></td>
+                                        <td><?php echo $haveVal; ?></td>
+                                        <td><?php echo $staffVal['in_training']; ?></td>
+                                        <td><?php echo $staffVal['total']; ?></td>
+                                        <td><?php echo XrgHelperFunctions::xrgFormatValue(($haveVal - $staffVal['total']), 'variance'); ?></td>   <!-- Have - Par  -->
+                                    </tr>
+                                    <tr><!-- Empty Row  --><td></td></tr>
+                                    <?php endforeach ?>
+                                    <tr>
+                                        <td>Total Staff</td>
+                                        <td><?php echo $haveValTotal; ?></td>
+                                        <td><?php echo $inTrainingTotal; ?></td>
+                                        <td><?php echo $parTotal; ?></td>
+                                        <td><?php echo XrgHelperFunctions::xrgFormatValue(($haveValTotal - $parTotal), 'variance'); ?></td>   <!-- Have - Par  -->
+                                    </tr>
+                                    <tr><!-- Empty Row  --><td></td></tr>
+                                    <tr><!-- Empty Row  --><td></td></tr>
+                                    <tr><!-- Empty Row  --><td></td></tr>
+                                    <tr><!-- Empty Row  --><td></td></tr>
+                                    <tr>
+                                        <td colspan="2">Max Tables to seat in restaurant:</td>
+                                        <td><?php echo $maxTables; ?></td>
+                                    </tr>
+                                    <tr><!-- Empty Row  --><td></td></tr>
+                                    <tr>
+                                        <td colspan="2">4 Table Sections = Ser/Ctkl:</td>
+                                        <td><?php echo ceil($maxTables / 4); ?></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                        <td class="table-divider table-containers"></td>
+                        <td class="table-containers labor-table">
+                            <table>
+                                <thead>
+                                    <tr class="weekly-heading">
+                                        <th colspan="10">Staffing Pars</th>
+                                    </tr>
+                                    <tr>
+                                        <th></th>
+                                        <th></th>
+                                        <th>Mon</th>
+                                        <th>Tues</th>
+                                        <th>Wed</th>
+                                        <th>Thurs</th>
+                                        <th>Fri</th>
+                                        <th>Sat</th>
+                                        <th>Sun</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach($stafffingData[$sheetId] as $staffType => $staffVal ) : ?>
+                                    <tr>
+                                        <td><?php echo $staffType; ?></td>
+                                        <td>am</td>
+                                        <td><?php echo $staffVal['am']['Mon']; ?></td>
+                                        <td><?php echo $staffVal['am']['Tues']; ?></td>
+                                        <td><?php echo $staffVal['am']['Wed']; ?></td>
+                                        <td><?php echo $staffVal['am']['Thurs']; ?></td>
+                                        <td><?php echo $staffVal['am']['Fri']; ?></td>
+                                        <td><?php echo $staffVal['am']['Sat']; ?></td>
+                                        <td><?php echo $staffVal['am']['Sun']; ?></td>
+                                        <td><?php echo array_sum($staffVal['am']); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>pm</td>
+                                        <td><?php echo $staffVal['pm']['Mon']; ?></td>
+                                        <td><?php echo $staffVal['pm']['Tues']; ?></td>
+                                        <td><?php echo $staffVal['pm']['Wed']; ?></td>
+                                        <td><?php echo $staffVal['pm']['Thurs']; ?></td>
+                                        <td><?php echo $staffVal['pm']['Fri']; ?></td>
+                                        <td><?php echo $staffVal['pm']['Sat']; ?></td>
+                                        <td><?php echo $staffVal['pm']['Sun']; ?></td>
+                                        <td><?php echo array_sum($staffVal['pm']); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="9"></td>
+                                        <td><?php echo $staffVal['total']; ?></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
             </div>
-        <?php else : ?>
-            <div class="no-result">No Report Found At The Moment!</div>
-        <?php endif; ?>
+        </div>
+        <?php endforeach; ?>
+
+        <!--  Tabs Button  -->
+        <div class="tabs-btn-wrapper">
+        <?php
+            foreach($sheetData as $sheetObj) : 
+                $period = XrgHelperFunctions::xrgFormatArrayKeys($sheetObj->period_name); 
+        ?>
+            <button class="periods-tab view-template-tabs" data-period-id="<?php echo $period; ?>" ><?php echo $sheetObj->period_name; ?></button>
+            <?php endforeach; ?>
+        <?php
+            foreach($stafffingData['xrg_locations'] as $staffObj) : 
+                $sheetId = XrgHelperFunctions::xrgFormatArrayKeys($staffObj); 
+        ?>
+            <button class="periods-tab view-template-tabs" data-period-id="<?php echo $sheetId; ?>" ><?php echo $staffObj; ?></button>
+            <?php endforeach; ?>
+        </div>
+
+    <?php else : ?>
+        <div class="no-result">No Report Found At The Moment!</div>
+    <?php endif; ?>
     </div>
 </section>
 

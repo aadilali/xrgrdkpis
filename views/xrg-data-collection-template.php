@@ -3,8 +3,6 @@
 use XRG\RD\XrgRdKpis;
 use XRG\RD\XrgHelperFunctions;
 
-get_header();
-
 // KPIs Form Data
 if(isset($_POST['xrg_kpis_data_submit']) && $_POST['xrg_kpis_data_submit'] === 'SAVE') {
     
@@ -36,9 +34,8 @@ if(isset($_POST['xrg_staffing_pars_data_submit']) && $_POST['xrg_staffing_pars_d
     if ( isset( $_POST['xrg_verify_staffing_pars'] ) || wp_verify_nonce( $_POST['xrg_verify_staffing_pars'], 'xrg_verify_staffing_pars_data' ) ) {
       
        unset( $_POST['xrg_staffing_pars_data_submit'] );
-     //  XrgRdKpis::instance()->xrgDBInstance()->xrgSaveDataToDB($_POST);
-     //  wp_redirect( site_url('/rd-view-sheet'));
-     print_r($_POST);
+       XrgRdKpis::instance()->xrgDBInstance()->xrgSaveStaffingToDB($_POST);
+       wp_redirect( site_url('/rd-view-sheet'));
    }
 }
 
@@ -54,6 +51,9 @@ $currentWeek = ceil((date("d",strtotime('today')) - date("w",strtotime('today'))
 
 // Staffing Pars Types
 $staffingPars = ['Servers', 'Cocktail', 'Host', 'Bar', 'Bus', 'Expo', 'Cook', 'Prep', 'Dish'];
+
+get_header();
+
 ?>
 <div class="alignwide xrg-wrapper">
     <div class="flex-container-form xrg-kpi-data">
@@ -321,7 +321,6 @@ $staffingPars = ['Servers', 'Cocktail', 'Host', 'Bar', 'Bus', 'Expo', 'Cook', 'P
             <h2>STAFFING PARS FORM</h2>
             <form method="post" action="" id="staffing_pars_sheet">
                 <input type="hidden" name="xrg_region" value="ASantana" />
-                <input type="hidden" name="xrg_data_type" value="staffing_pars" />
                 <?php wp_nonce_field( 'xrg_verify_staffing_pars_data', 'xrg_verify_staffing_pars' ); ?>
                 
                 <?php foreach($regionLocations as $location) : ?>
@@ -460,11 +459,53 @@ $staffingPars = ['Servers', 'Cocktail', 'Host', 'Bar', 'Bus', 'Expo', 'Cook', 'P
                                         </span>
                                     </div>
                                 </div>
+                                <div class="flex-body-right-content">
+                                    <!-- Total Par Field -->
+                                    <div class="flex-col-form par-type-total-label">
+                                        <span class="field_label">
+                                            <?php echo $staffingPar; ?> In Training
+                                        </span>
+                                    </div>
+                                    <div class="flex-col-form par-type-total-val">
+                                        <span class="field_val">
+                                            <input type="text" name="<?php echo $location . '[' . $staffingPar . ']'; ?>[in_training]" value="0" />
+                                        </span>
+                                    </div>
+                                    <div class="flex-col-form par-type-total-label">
+                                        <span class="field_label">
+                                            Total <?php echo $staffingPar; ?>
+                                        </span>
+                                    </div>
+                                    <div class="flex-col-form par-type-total-val">
+                                        <span class="field_val">
+                                            <input type="text" name="<?php echo $location . '[' . $staffingPar . ']'; ?>[total]" value="0" />
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                     </div>
                     <?php endforeach; ?>
+                    <div class="staffing-type-row">   <!--  Max Table to Seat  -->
+                        <div class="flex-body">
+                            <div class="flex-body-right">
+                                <div class="flex-body-right-content">
+                                    <!-- AM DATA -->
+                                    <div class="flex-col-form">
+                                        <span class="field_val" style="font-weight: bold;">
+                                            Max Table to Seat
+                                        </span>
+                                    </div>
+                                    <div class="flex-col-form" style="flex-grow: 10;">
+                                        <span class="field_val">
+                                            <input type="text" name="<?php echo $location . '[max_tables]'; ?>" value="0" />
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <?php endforeach; ?>
                 <div class="flex-button-body">

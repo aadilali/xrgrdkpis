@@ -40,7 +40,7 @@ final class XrgHelperFunctions
      * @since    0.1
      * @access   public
      * @param string $xrgNumber
-     * @param string $xrgFormat available formats are currency | percentage
+     * @param string $xrgFormat available formats are currency | percentage | variance | abs-numeric
      * @return string Return formatted value as a string 
      */ 
     public static function xrgFormatValue(string $xrgNumber, string $xrgFormat): string
@@ -61,6 +61,8 @@ final class XrgHelperFunctions
             $formattedNumber = '<span>'. number_format($xrgNumber, 2, '.' ,',') .'%</span>';
         } elseif($xrgFormat === 'abs-numeric') {
             $formattedNumber = ($xrgNumber < 0) ? '<span class="color-red">'. abs($xrgNumber) .'</span>' : '<span>'. $xrgNumber .'</span>';
+        } elseif($xrgFormat === 'variance') {
+            $formattedNumber = ($xrgNumber < 0) ? '<span class="color-red">('. abs($xrgNumber) .')</span>' : '<span>'. $xrgNumber .'</span>';
         } else {
             return (string) $xrgNumber;
         }
