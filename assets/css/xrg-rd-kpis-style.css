@@ -346,6 +346,43 @@ input.btn:hover, .btn-transfer:hover, .span-btn:hover {
     font-weight: bold;
 }
 
+.xrg-table-container .pars-total-table {
+    width: 32%;
+    vertical-align: top;
+}
+.xrg-table-container .pars-total-table table, .xrg-table-container .staffing-table table {
+    border-collapse: collapse !important;
+}
+.xrg-table-container .pars-total-table table tr.weekly-heading th {
+    height: 36px;
+}
+.xrg-table-container .pars-total-table table tr td {
+    border: 1px dotted #000 !important;
+}
+.xrg-table-container .pars-total-table tr th {
+    background-color: #ffff00;
+}
+.xrg-table-container .pars-total-table tr th:first-child {
+    background-color: #fff;
+}
+.xrg-table-container .pars-total-table tr td {
+    background-color: #ffc107;
+}
+.xrg-table-container .pars-total-table tr td.empty-row {
+    background-color: #fff;
+}
+.xrg-table-container td.bg-color-yellow {
+    background-color: #ffff00 !important;
+}
+
+.xrg-table-container .staffing-table tr td.staff-type-bg {
+    background-color: #8ef2ff;
+}
+
+.xrg-table-container .staffing-table {
+    width: 60%;
+    vertical-align: top;
+}
 /*  File Upload Section  */
 .xrg-file-data {
     width: 50%;

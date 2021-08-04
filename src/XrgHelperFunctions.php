@@ -103,4 +103,22 @@ final class XrgHelperFunctions
 
         return move_uploaded_file($pObj['xrg_file']['tmp_name'], XRG_PLUGIN_PATH . 'original-file/xrg-original-sheet-data.xlsx');
     }
+
+    /**
+     * Add Two identical arrays value as per key name
+     * @since    0.1
+     * @access   public
+     * @param array $originalArray array have value to be sum
+     * @param array $sumArray array after sum the array values on respective indexes (keys)
+     * @return array resulted sum array
+     */ 
+    public static function xrgSumKeysValue(array $originalArray, array $sumArray): array
+    {
+        foreach($originalArray['am'] as $key => $val) {
+            $sumArray['am'][$key] += $val;
+            $sumArray['pm'][$key] += $originalArray['pm'][$key];
+        }
+
+        return $sumArray;
+    }
 }

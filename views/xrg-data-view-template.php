@@ -388,7 +388,7 @@ get_header();
                 <!-- Main Table  -->
                 <table class="main-table-wrapper">
                     <tr>
-                        <td class="table-containers">
+                        <td class="table-containers pars-total-table">
                             <table>
                                 <thead>
                                     <tr class="weekly-heading">
@@ -423,7 +423,7 @@ get_header();
                                         <td><?php echo $staffVal['total']; ?></td>
                                         <td><?php echo XrgHelperFunctions::xrgFormatValue(($haveVal - $staffVal['total']), 'variance'); ?></td>   <!-- Have - Par  -->
                                     </tr>
-                                    <tr><!-- Empty Row  --><td></td></tr>
+                                    <tr><!-- Empty Row  --><td colspan="5" class="empty-row"></td></tr>
                                     <?php endforeach ?>
                                     <tr>
                                         <td>Total Staff</td>
@@ -432,24 +432,23 @@ get_header();
                                         <td><?php echo $parTotal; ?></td>
                                         <td><?php echo XrgHelperFunctions::xrgFormatValue(($haveValTotal - $parTotal), 'variance'); ?></td>   <!-- Have - Par  -->
                                     </tr>
-                                    <tr><!-- Empty Row  --><td></td></tr>
-                                    <tr><!-- Empty Row  --><td></td></tr>
-                                    <tr><!-- Empty Row  --><td></td></tr>
-                                    <tr><!-- Empty Row  --><td></td></tr>
+                                    <tr><!-- Empty Row  --><td colspan="5" class="empty-row"></td></tr>
+                                    <tr><!-- Empty Row  --><td colspan="5" class="empty-row"></td></tr>
+                                    <tr><!-- Empty Row  --><td colspan="5" class="empty-row"></td></tr>
                                     <tr>
                                         <td colspan="2">Max Tables to seat in restaurant:</td>
-                                        <td><?php echo $maxTables; ?></td>
+                                        <td class="bg-color-yellow"><?php echo $maxTables; ?></td>
                                     </tr>
-                                    <tr><!-- Empty Row  --><td></td></tr>
+                                    <tr><!-- Empty Row  --><td colspan="5" class="empty-row"></td></tr>
                                     <tr>
                                         <td colspan="2">4 Table Sections = Ser/Ctkl:</td>
-                                        <td><?php echo ceil($maxTables / 4); ?></td>
+                                        <td class="bg-color-yellow"><?php echo ceil($maxTables / 4); ?></td>
                                     </tr>
                                 </tbody>
                             </table>
                         </td>
-                        <td class="table-divider table-containers"></td>
-                        <td class="table-containers labor-table">
+                        <td class="table-divider-pars"></td>
+                        <td class="table-containers staffing-table">
                             <table>
                                 <thead>
                                     <tr class="weekly-heading">
@@ -469,9 +468,18 @@ get_header();
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach($stafffingData[$sheetId] as $staffType => $staffVal ) : ?>
+                                    <?php 
+                                    $grandTotal = [
+                                        'am' => ['Mon' => 0, 'Tues' => 0, 'Wed' => 0, 'Thurs' => 0, 'Fri' => 0, 'Sat' => 0, 'Sun' => 0],
+                                        'pm' => ['Mon' => 0, 'Tues' => 0, 'Wed' => 0, 'Thurs' => 0, 'Fri' => 0, 'Sat' => 0, 'Sun' => 0]
+                                    ];
+                                    $staffTotal = 0;
+                                    foreach($stafffingData[$sheetId] as $staffType => $staffVal ) :
+                                        $grandTotal = XrgHelperFunctions::xrgSumKeysValue($staffVal, $grandTotal);
+                                        $staffTotal += $staffVal['total'];
+                                    ?>
                                     <tr>
-                                        <td><?php echo $staffType; ?></td>
+                                        <td class="staff-type-bg"><?php echo $staffType; ?></td>
                                         <td>am</td>
                                         <td><?php echo $staffVal['am']['Mon']; ?></td>
                                         <td><?php echo $staffVal['am']['Tues']; ?></td>
@@ -496,9 +504,38 @@ get_header();
                                     </tr>
                                     <tr>
                                         <td colspan="9"></td>
-                                        <td><?php echo $staffVal['total']; ?></td>
+                                        <td class="bg-color-yellow"><?php echo $staffVal['total']; ?></td>
                                     </tr>
                                     <?php endforeach; ?>
+                                    <!-- Grand Total  -->
+                                    <tr>
+                                        <td class="staff-type-bg">Total Count</td>
+                                        <td>am</td>
+                                        <td><?php echo $grandTotal['am']['Mon']; ?></td>
+                                        <td><?php echo $grandTotal['am']['Tues']; ?></td>
+                                        <td><?php echo $grandTotal['am']['Wed']; ?></td>
+                                        <td><?php echo $grandTotal['am']['Thurs']; ?></td>
+                                        <td><?php echo $grandTotal['am']['Fri']; ?></td>
+                                        <td><?php echo $grandTotal['am']['Sat']; ?></td>
+                                        <td><?php echo $grandTotal['am']['Sun']; ?></td>
+                                        <td><?php echo array_sum($grandTotal['am']); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>pm</td>
+                                        <td><?php echo $grandTotal['pm']['Mon']; ?></td>
+                                        <td><?php echo $grandTotal['pm']['Tues']; ?></td>
+                                        <td><?php echo $grandTotal['pm']['Wed']; ?></td>
+                                        <td><?php echo $grandTotal['pm']['Thurs']; ?></td>
+                                        <td><?php echo $grandTotal['pm']['Fri']; ?></td>
+                                        <td><?php echo $grandTotal['pm']['Sat']; ?></td>
+                                        <td><?php echo $grandTotal['pm']['Sun']; ?></td>
+                                        <td><?php echo array_sum($grandTotal['pm']); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="9"></td>
+                                        <td class="bg-color-yellow"><?php echo $staffTotal; ?></td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </td>

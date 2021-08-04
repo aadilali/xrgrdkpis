@@ -120,6 +120,9 @@ class XrgKpisReadSheet
     {
         // Get data from DB class
         $sheetObjs = XrgRdKpis::instance()->xrgDBInstance()->xrgGetRegionalData( $regionName );
+        // Get data from DB class
+        $stafffingObjs = XrgRdKpis::instance()->xrgDBInstance()->xrgStaffingParsData( $regionName );
+        $stafffingObjs = unserialize($stafffingObjs->staffing_data);
         
         $spreadsheet = new Spreadsheet();
 
@@ -346,8 +349,15 @@ class XrgKpisReadSheet
             $spreadsheet->setActiveSheetIndexByName($sheetObj->period_name);
         }
 
+        // Create Staffing Data worksheets
+        foreach($stafffingObjs['xrg_locations'] as $staffObj) {
+            $currentStafftSheet = new Worksheet($spreadsheet, $staffObj);
+            $spreadsheet->addSheet($currentStafftSheet);
+            $spreadsheet->setActiveSheetIndexByName($staffObj);
+            $this->xrgStaffingParsSheets($staffObj, $stafffingObjs, $currentStafftSheet);
+            
+        }
         // Embed Orignal File work sheets
-
         $originalFile = $this->xrgLoadSheet();
 
         $clonedOriginal = clone $originalFile->getSheet(1);
@@ -534,6 +544,82 @@ class XrgKpisReadSheet
         $sheet->getStyle('Y')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_CURRENCY_USD_SIMPLE);
         $sheet->getStyle('AB:AE')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_PERCENTAGE_00);
         $sheet->getStyle('AH')->getNumberFormat()->setFormatCode('#,##0.00_);[Red](#,##0.00)');
+
+        return $sheet;
+    }
+
+    /**
+     * Create Staffing Pars worksheets, styles and Formulas
+     *
+     * @since    0.1
+     * @access   public
+     * @param    string $staffLocation
+     * @param    array $staffData Date object get from DB
+     * @param    Worksheet $sheet current active sheet in memory
+     * @return    Worksheet
+     */
+    public function xrgStaffingParsSheets(string $staffLocation, array $staffData, Worksheet $sheet): Worksheet
+    {
+        // // Set Headers
+        $headerData = [
+            [$staffLocation, 'Have', 'In Training', 'Par', 'Variance', '', '', '',
+             'Mon' , 'Tues', 'Wed', 'Thurs', 'Fri', 'Sat', 'Sun'
+            ]
+        ];
+
+        $sheet->fromArray(
+                $headerData,  // The data to set
+                NULL,        // Array values with this value will not be set
+                "A3"         // Top left coordinate of the worksheet range where
+        );
+
+        $contentIndex = 4;
+        $contentStart = 4;
+        $staffLocation = XrgHelperFunctions::xrgFormatArrayKeys($staffLocation);
+        $maxTables = $staffData[$staffLocation]['max_tables'];
+        unset($staffData[$staffLocation]['max_tables']);
+        foreach($staffData[$staffLocation] as $staffType => $staffVal ) {
+            $sheet->setCellValue("A$contentIndex", $staffType);
+            $sheet->setCellValue("B$contentIndex", '=IF($A$1="RD",COUNTIFS(Original!M:M,$A$3,Original!O:O,A4),COUNTIFS(Original!L:L,$A$3,Original!O:O,A4))');
+            $sheet->setCellValue("C$contentIndex", $staffVal['in_training']);
+            $sheet->setCellValue("D$contentIndex", $staffVal['total']);
+            $sheet->setCellValue("E$contentIndex", "=B$contentIndex - D$contentIndex");
+
+            $contentIndex += 2;
+        }
+        $contentEnd = $contentIndex;
+        $contentIndex++;
+        $sheet->setCellValue("A$contentIndex", 'Total Staff');
+        $sheet->setCellValue("B$contentIndex", "=SUM(B$contentStart:B$contentEnd)");
+        $sheet->setCellValue("C$contentIndex", "=SUM(C$contentStart:C$contentEnd)");
+        $sheet->setCellValue("D$contentIndex", "=SUM(D$contentStart:D$contentEnd)");
+        $sheet->setCellValue("E$contentIndex", "=B$contentIndex - D$contentIndex");
+
+         // Styling of Sheet
+         foreach (range('A','P') as $col) {
+            $sheet->getColumnDimension($col)->setWidth(16, 'px');
+        }
+        
+
+        $headingArray = [
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => array('argb' => 'ffffff00')
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_DOTTED,
+                    'color' => ['argb' => '00000000'],
+                ]
+            ]
+        ];
+
+        $sheet->getStyle("A3:E$contentIndex")->applyFromArray($headingArray);
 
         return $sheet;
     }
