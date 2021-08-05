@@ -28,6 +28,12 @@ $sheetData = XrgRdKpis::instance()->xrgDBInstance()->xrgGetRegionalData( 'ASanta
 $stafffingData = XrgRdKpis::instance()->xrgDBInstance()->xrgStaffingParsData( 'ASantana' );
 $stafffingData = unserialize($stafffingData->staffing_data);
 
+$staffingPars = [
+    'Servers' => 'Server/Cocktail', 'Host' => 'Host',
+    'Bar' => 'Bartender', 'Bus' => 'Busser/Runner', 'Expo' => 'Expo',
+    'Cook' => 'Line Cook', 'Prep' => 'Prep Cook', 'Dish' => 'Dish'
+];
+
 get_header();
 
 ?>
@@ -410,18 +416,31 @@ get_header();
                                     $parTotal = 0;
                                     $maxTables = $stafffingData[$sheetId]['max_tables'];
                                     unset($stafffingData[$sheetId]['max_tables']);
+
                                     foreach($stafffingData[$sheetId] as $staffType => $staffVal ) :
+                                        $staffParType = $staffingPars[$staffType];
+                                        $staffInTraining = $staffVal['in_training'];
+                                        $staffPars = $staffVal['total'];
+
+                                        if($staffType === 'Servers') :
+                                            $staffInTraining += $stafffingData[$sheetId]['Cocktail']['in_training'];
+                                            $staffPars += $stafffingData[$sheetId]['Cocktail']['total'];
+                                        endif;
+                                        if($staffType === 'Cocktail') :
+                                            continue;
+                                        endif;
+
                                         $haveVal = 20;
                                         $haveValTotal += $haveVal;
-                                        $inTrainingTotal += $staffType['in_training'];
-                                        $parTotal += $staffVal['total'];
+                                        $inTrainingTotal += $staffInTraining;
+                                        $parTotal += $staffPars;
                                     ?>
                                     <tr>
-                                        <td><?php echo $staffType; ?></td>
+                                        <td><?php echo $staffParType; ?></td>
                                         <td><?php echo $haveVal; ?></td>
-                                        <td><?php echo $staffVal['in_training']; ?></td>
-                                        <td><?php echo $staffVal['total']; ?></td>
-                                        <td><?php echo XrgHelperFunctions::xrgFormatValue(($haveVal - $staffVal['total']), 'variance'); ?></td>   <!-- Have - Par  -->
+                                        <td><?php echo $staffInTraining; ?></td>
+                                        <td><?php echo $staffPars; ?></td>
+                                        <td><?php echo XrgHelperFunctions::xrgFormatValue(($haveVal - $staffPars), 'variance'); ?></td>   <!-- Have - Par  -->
                                     </tr>
                                     <tr><!-- Empty Row  --><td colspan="5" class="empty-row"></td></tr>
                                     <?php endforeach ?>

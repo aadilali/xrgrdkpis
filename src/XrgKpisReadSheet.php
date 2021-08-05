@@ -12,6 +12,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 use XRG\RD\XrgHelperFunctions;
 
@@ -354,8 +355,7 @@ class XrgKpisReadSheet
             $currentStafftSheet = new Worksheet($spreadsheet, $staffObj);
             $spreadsheet->addSheet($currentStafftSheet);
             $spreadsheet->setActiveSheetIndexByName($staffObj);
-            $this->xrgStaffingParsSheets($staffObj, $stafffingObjs, $currentStafftSheet);
-            
+            $this->xrgStaffingParsTotalSheets($staffObj, $stafffingObjs, $currentStafftSheet);
         }
         // Embed Orignal File work sheets
         $originalFile = $this->xrgLoadSheet();
@@ -558,13 +558,18 @@ class XrgKpisReadSheet
      * @param    Worksheet $sheet current active sheet in memory
      * @return    Worksheet
      */
-    public function xrgStaffingParsSheets(string $staffLocation, array $staffData, Worksheet $sheet): Worksheet
+    public function xrgStaffingParsTotalSheets(string $staffLocation, array $staffData, Worksheet $sheet): Worksheet
     {
-        // // Set Headers
+        // Staffing Jobs group
+        $staffingPars = [
+            'Servers' => 'Server/Cocktail', 'Host' => 'Host',
+            'Bar' => 'Bartender', 'Bus' => 'Busser/Runner', 'Expo' => 'Expo',
+            'Cook' => 'Line Cook', 'Prep' => 'Prep Cook', 'Dish' => 'Dish'
+        ];
+
+        // Set Headers
         $headerData = [
-            [$staffLocation, 'Have', 'In Training', 'Par', 'Variance', '', '', '',
-             'Mon' , 'Tues', 'Wed', 'Thurs', 'Fri', 'Sat', 'Sun'
-            ]
+            [$staffLocation, 'Have', 'In Training', 'Par', 'Variance', '']
         ];
 
         $sheet->fromArray(
@@ -573,17 +578,66 @@ class XrgKpisReadSheet
                 "A3"         // Top left coordinate of the worksheet range where
         );
 
+        $headingArray = [
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => array('argb' => 'ffffc107')
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_DOTTED,
+                    'color' => ['argb' => '00000000'],
+                ]
+            ]
+        ];
+
+        $borderArray = [
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_DOTTED,
+                    'color' => ['argb' => '00000000'],
+                ]
+            ]
+        ];
+
         $contentIndex = 4;
         $contentStart = 4;
         $staffLocation = XrgHelperFunctions::xrgFormatArrayKeys($staffLocation);
         $maxTables = $staffData[$staffLocation]['max_tables'];
         unset($staffData[$staffLocation]['max_tables']);
+
         foreach($staffData[$staffLocation] as $staffType => $staffVal ) {
-            $sheet->setCellValue("A$contentIndex", $staffType);
-            $sheet->setCellValue("B$contentIndex", '=IF($A$1="RD",COUNTIFS(Original!M:M,$A$3,Original!O:O,A4),COUNTIFS(Original!L:L,$A$3,Original!O:O,A4))');
-            $sheet->setCellValue("C$contentIndex", $staffVal['in_training']);
-            $sheet->setCellValue("D$contentIndex", $staffVal['total']);
+            $staffParType = $staffingPars[$staffType];
+            $staffInTraining = $staffVal['in_training'];
+            $staffPars = $staffVal['total'];
+
+            if($staffType === 'Servers') :
+                $staffInTraining += $staffData[$staffLocation]['Cocktail']['in_training'];
+                $staffPars += $staffData[$staffLocation]['Cocktail']['total'];
+            endif;
+            if($staffType === 'Cocktail') :
+                continue;
+            endif;
+
+            $haveFormula = '=IF($A$1="RD",COUNTIFS(Original!M:M,$A$3,Original!O:O,A'.$contentIndex.'),COUNTIFS(Original!L:L,$A$3,Original!O:O,A'.$contentIndex.'))';
+            $sheet->setCellValue("A$contentIndex", $staffParType);
+            $sheet->setCellValue("B$contentIndex", $haveFormula);
+            $sheet->setCellValue("C$contentIndex", $staffInTraining);
+            $sheet->setCellValue("D$contentIndex", $staffPars);
             $sheet->setCellValue("E$contentIndex", "=B$contentIndex - D$contentIndex");
+            
+            // Apply Style
+            $sheet->getStyle("A$contentIndex:E$contentIndex")->applyFromArray($headingArray);
 
             $contentIndex += 2;
         }
@@ -596,30 +650,245 @@ class XrgKpisReadSheet
         $sheet->setCellValue("E$contentIndex", "=B$contentIndex - D$contentIndex");
 
          // Styling of Sheet
-         foreach (range('A','P') as $col) {
-            $sheet->getColumnDimension($col)->setWidth(16, 'px');
-        }
-        
+         $sheet->getStyle("A$contentIndex:E$contentIndex")->getFont()->setBold(TRUE);
+         $sheet->getStyle("A3")->getFont()->setBold(TRUE);
+         $sheet->getStyle("A3:E$contentIndex")->applyFromArray($borderArray);
 
-        $headingArray = [
+         // Max Table Data
+         $contentIndex += 3;
+         $sheet->mergeCells("A$contentIndex:B$contentIndex");
+         $sheet->setCellValue("A$contentIndex", 'Max Tables to seat in restaurant:');
+         $sheet->setCellValue("C$contentIndex", $maxTables);
+         $sheet->getStyle("C$contentIndex")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('ffff00');
+         
+         $contentIndex += 2;
+         $sheet->mergeCells("A$contentIndex:B$contentIndex");
+         $sheet->setCellValue("A$contentIndex", '4 Table Sections = Ser/Ctkl:');
+         $sheet->setCellValue("C$contentIndex", ceil($maxTables/4));
+         $sheet->getStyle("C$contentIndex")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('ffff00');
+
+
+         // Styling Header
+         $sheet->getStyle("B3:E3")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('ffff00');
+
+         foreach (range('A','F') as $col) {
+            $sheet->getColumnDimension($col)->setWidth(18, 'px');
+        }
+
+        // Hide Rows
+        $sheet->getRowDimension(1)->setVisible(FALSE);
+
+        // Staffing Pars Data sheet
+        $sheet = $this->xrgStaffingParsDataSheet($staffLocation, $staffData, $sheet);
+
+        $sheet->getStyle('E')->getNumberFormat()->setFormatCode('0_);[Red](0)');
+
+        return $sheet;
+    }
+
+    /**
+     * Create Staffing Pars worksheets, styles and Formulas
+     *
+     * @since    0.1
+     * @access   public
+     * @param    string $staffLocation
+     * @param    array $staffData Date object get from DB
+     * @param    Worksheet $sheet current active sheet in memory
+     * @return    Worksheet
+     */
+    public function xrgStaffingParsDataSheet(string $staffLocation, array $staffData, Worksheet $sheet): Worksheet
+    {
+        // Set Headers
+        $headerData = [
+             ['', '', 'Mon' , 'Tues', 'Wed', 'Thurs', 'Fri', 'Sat', 'Sun', '']
+         ];
+
+        foreach (range('G','P') as $col) {
+            $sheet->getColumnDimension($col)->setWidth(14, 'px');
+        }
+
+        $topCellBorders = [
+            'borders' => [
+                'top' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                    'color' => [
+                        'rgb' => '000000'
+                    ]
+                ]
+            ]
+        ];
+
+        $leftCellBorders = [
+            'borders' => [
+                'left' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                    'color' => [
+                        'rgb' => '000000'
+                    ]
+                ]
+            ]
+        ];
+
+        $rightCellBorders = [
+            'borders' => [
+                'right' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                    'color' => [
+                        'rgb' => '000000'
+                    ]
+                ]
+            ]
+        ];
+
+        $bottomCellBorders = [
+            'borders' => [
+                'bottom' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                    'color' => [
+                        'rgb' => '000000'
+                    ]
+                ]
+            ]
+        ];
+
+        $allCellBorders = [
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => [
+                        'rgb' => '000000'
+                    ]
+                ]
+            ],
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
                 'wrapText' => true,
             ],
-            'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => array('argb' => 'ffffff00')
-            ],
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_DOTTED,
-                    'color' => ['argb' => '00000000'],
-                ]
-            ]
         ];
 
-        $sheet->getStyle("A3:E$contentIndex")->applyFromArray($headingArray);
+        $sheet->fromArray(
+                $headerData,  // The data to set
+                NULL,        // Array values with this value will not be set
+                "G7"         // Top left coordinate of the worksheet range where
+        );
+        $sheet->getStyle("I7:O7")->applyFromArray($allCellBorders);
+
+        $contentIndex = 8;
+        $contentStart = $contentIndex;
+        $grandTotal = [
+            'am' => ['Mon' => 0, 'Tues' => 0, 'Wed' => 0, 'Thurs' => 0, 'Fri' => 0, 'Sat' => 0, 'Sun' => 0],
+            'pm' => ['Mon' => 0, 'Tues' => 0, 'Wed' => 0, 'Thurs' => 0, 'Fri' => 0, 'Sat' => 0, 'Sun' => 0]
+        ];
+        $staffTotal = 0;
+
+        foreach($staffData[$staffLocation] as $staffType => $staffVal ) {
+
+            // For Grand Totals
+            $grandTotal = XrgHelperFunctions::xrgSumKeysValue($staffVal, $grandTotal);
+            $staffTotal += $staffVal['total'];
+
+            $sheet->setCellValue("G$contentIndex", $staffType);
+            $sheet->setCellValue("H$contentIndex", 'am');
+            $sheet->setCellValue("I$contentIndex", $staffVal['am']['Mon']);
+            $sheet->setCellValue("J$contentIndex", $staffVal['am']['Tues']);
+            $sheet->setCellValue("K$contentIndex", $staffVal['am']['Wed']);
+            $sheet->setCellValue("L$contentIndex", $staffVal['am']['Thurs']);
+            $sheet->setCellValue("M$contentIndex", $staffVal['am']['Fri']);
+            $sheet->setCellValue("N$contentIndex", $staffVal['am']['Sat']);
+            $sheet->setCellValue("O$contentIndex", $staffVal['am']['Sun']);
+            $sheet->setCellValue("P$contentIndex", array_sum($staffVal['am']));
+            $sheet->getStyle("G$contentIndex:P$contentIndex")->applyFromArray($allCellBorders);
+            $sheet->getStyle("G$contentIndex:P$contentIndex")->applyFromArray($topCellBorders);
+            $sheet->getStyle("G$contentIndex")->applyFromArray($leftCellBorders);
+            $sheet->getStyle("P$contentIndex")->applyFromArray($rightCellBorders);
+            $sheet->getStyle("G$contentIndex")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('8ef2ff');
+           
+            $contentIndex += 1;
+            $sheet->setCellValue("G$contentIndex", '');
+            $sheet->setCellValue("H$contentIndex", 'pm');
+            $sheet->setCellValue("I$contentIndex", $staffVal['pm']['Mon']);
+            $sheet->setCellValue("J$contentIndex", $staffVal['pm']['Tues']);
+            $sheet->setCellValue("K$contentIndex", $staffVal['pm']['Wed']);
+            $sheet->setCellValue("L$contentIndex", $staffVal['pm']['Thurs']);
+            $sheet->setCellValue("M$contentIndex", $staffVal['pm']['Fri']);
+            $sheet->setCellValue("N$contentIndex", $staffVal['pm']['Sat']);
+            $sheet->setCellValue("O$contentIndex", $staffVal['pm']['Sun']);
+            $sheet->setCellValue("P$contentIndex", array_sum($staffVal['pm']));
+            $sheet->getStyle("G$contentIndex:P$contentIndex")->applyFromArray($allCellBorders);
+            $sheet->getStyle("G$contentIndex")->applyFromArray($leftCellBorders);
+            $sheet->getStyle("P$contentIndex")->applyFromArray($rightCellBorders);
+            $sheet->getStyle("G$contentIndex:P$contentIndex")->applyFromArray($bottomCellBorders);
+           
+            $contentIndex += 1;
+            $sheet->setCellValue("P$contentIndex", 'Ttl ' . $staffType);
+            $sheet->getStyle("P$contentIndex")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('ffff00');
+            $sheet->getStyle("P$contentIndex")->applyFromArray($allCellBorders);
+            $sheet->getStyle("P$contentIndex")->applyFromArray($leftCellBorders);
+            $sheet->getStyle("P$contentIndex")->applyFromArray($rightCellBorders);
+
+            $contentIndex += 1;
+            $sheet->setCellValue("P$contentIndex", $staffVal['total']);
+            $sheet->getStyle("P$contentIndex")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('ffff00');
+            $sheet->getStyle("P$contentIndex")->applyFromArray($allCellBorders);
+            $sheet->getStyle("P$contentIndex")->applyFromArray($leftCellBorders);
+            $sheet->getStyle("P$contentIndex")->applyFromArray($rightCellBorders);
+            $sheet->getStyle("P$contentIndex")->applyFromArray($bottomCellBorders);
+
+            $contentIndex += 1;
+        }
+
+        // Header area
+        $sheet->mergeCells('G2:P2')->setCellValue('G2', 'Staffing Pars');
+        $sheet->getStyle('G2')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('c1c1c1');
+        $sheet->getStyle('G2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $contentIndex = 3;
+        $sheet->setCellValue("G$contentIndex", 'Total Count');
+        $sheet->setCellValue("H$contentIndex", 'am');
+        $sheet->setCellValue("I$contentIndex", $grandTotal['am']['Mon']);
+        $sheet->setCellValue("J$contentIndex", $grandTotal['am']['Tues']);
+        $sheet->setCellValue("K$contentIndex", $grandTotal['am']['Wed']);
+        $sheet->setCellValue("L$contentIndex", $grandTotal['am']['Thurs']);
+        $sheet->setCellValue("M$contentIndex", $grandTotal['am']['Fri']);
+        $sheet->setCellValue("N$contentIndex", $grandTotal['am']['Sat']);
+        $sheet->setCellValue("O$contentIndex", $grandTotal['am']['Sun']);
+        $sheet->setCellValue("P$contentIndex", array_sum($grandTotal['am']));
+        $sheet->getStyle("G$contentIndex:P$contentIndex")->applyFromArray($allCellBorders);
+        $sheet->getStyle("G$contentIndex:P$contentIndex")->applyFromArray($topCellBorders);
+        $sheet->getStyle("G$contentIndex")->applyFromArray($leftCellBorders);
+        $sheet->getStyle("P$contentIndex")->applyFromArray($rightCellBorders);
+        $sheet->getStyle("G$contentIndex")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('8ef2ff');
+        
+        $contentIndex += 1;
+        $sheet->setCellValue("G$contentIndex", '');
+        $sheet->setCellValue("H$contentIndex", 'pm');
+        $sheet->setCellValue("I$contentIndex", $grandTotal['pm']['Mon']);
+        $sheet->setCellValue("J$contentIndex", $grandTotal['pm']['Tues']);
+        $sheet->setCellValue("K$contentIndex", $grandTotal['pm']['Wed']);
+        $sheet->setCellValue("L$contentIndex", $grandTotal['pm']['Thurs']);
+        $sheet->setCellValue("M$contentIndex", $grandTotal['pm']['Fri']);
+        $sheet->setCellValue("N$contentIndex", $grandTotal['pm']['Sat']);
+        $sheet->setCellValue("O$contentIndex", $grandTotal['pm']['Sun']);
+        $sheet->setCellValue("P$contentIndex", array_sum($grandTotal['pm']));
+        $sheet->getStyle("G$contentIndex:P$contentIndex")->applyFromArray($allCellBorders);
+        $sheet->getStyle("G$contentIndex")->applyFromArray($leftCellBorders);
+        $sheet->getStyle("P$contentIndex")->applyFromArray($rightCellBorders);
+        $sheet->getStyle("G$contentIndex:P$contentIndex")->applyFromArray($bottomCellBorders);
+        
+        $contentIndex += 1;
+        $sheet->setCellValue("P$contentIndex", 'Ttl Staff');
+        $sheet->getStyle("P$contentIndex")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('ffff00');
+        $sheet->getStyle("P$contentIndex")->applyFromArray($allCellBorders);
+        $sheet->getStyle("P$contentIndex")->applyFromArray($leftCellBorders);
+        $sheet->getStyle("P$contentIndex")->applyFromArray($rightCellBorders);
+
+        $contentIndex += 1;
+        $sheet->setCellValue("P$contentIndex", $staffTotal);
+        $sheet->getStyle("P$contentIndex")->applyFromArray($allCellBorders);
+        $sheet->getStyle("P$contentIndex")->applyFromArray($leftCellBorders);
+        $sheet->getStyle("P$contentIndex")->applyFromArray($rightCellBorders);
+        $sheet->getStyle("P$contentIndex")->applyFromArray($bottomCellBorders);
 
         return $sheet;
     }

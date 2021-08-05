@@ -50,7 +50,11 @@ $weekDetails = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5'];
 $currentWeek = ceil((date("d",strtotime('today')) - date("w",strtotime('today')) - 1) / 7) + 1;
 
 // Staffing Pars Types
-$staffingPars = ['Servers', 'Cocktail', 'Host', 'Bar', 'Bus', 'Expo', 'Cook', 'Prep', 'Dish'];
+$staffingPars = [
+    'Server' => 'Servers', 'Cocktail' => 'Cocktail', 'Host' => 'Host',
+    'Bartender' => 'Bar', 'Busser/Runner' => 'Bus', 'Expo' => 'Expo',
+    'Line Cook' => 'Cook', 'Prep Cook' => 'Prep', 'Dish' => 'Dish'
+];
 
 get_header();
 
