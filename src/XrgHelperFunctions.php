@@ -121,4 +121,22 @@ final class XrgHelperFunctions
 
         return $sumArray;
     }
+
+    /**
+     * Create formula based on locations and index
+     * @since    0.1
+     * @access   public
+     * @param string $index current index of cell
+     * @return array resulted formula string
+     */ 
+    public static function xrgGenerateFoumula(string $index, $locations): string
+    {
+        $resultedArray = [];
+        $resultedArray = array_map(function($location) use ($index) {
+            $location = (count(explode(" ", $location)) > 1) ? '\'' . $location . '\'' : $location;
+            return $location . '!' . $index;
+        }, $locations);
+
+        return (implode(',', $resultedArray));
+    }
 }

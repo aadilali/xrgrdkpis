@@ -55,13 +55,10 @@ class XrgKpisReadSheet
      */
     public function xrgLoadSheet(): Spreadsheet
     {
-        // $pool = new CacheItemPoolInterface();
-        // $simpleCache = new SimpleCacheBridge($pool);
-
-        // \PhpOffice\PhpSpreadsheet\Settings::setCache($simpleCache);
-
         $sheetFile = XRG_PLUGIN_PATH . 'original-file/xrg-original-sheet-data.xlsx';
-        return IOFactory::load($sheetFile);
+        $xrgReader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($sheetFile);
+        $xrgReader->setReadDataOnly(true);
+        return $xrgReader->load($sheetFile);
     }
 
     public function xrgWriteHtmlTable(): void
@@ -353,23 +350,38 @@ class XrgKpisReadSheet
         // Create Staffing Data worksheets
         foreach($stafffingObjs['xrg_locations'] as $staffObj) {
             $currentStafftSheet = new Worksheet($spreadsheet, $staffObj);
+            $currentStafftSheet->getTabColor()->setRGB('92d050');
             $spreadsheet->addSheet($currentStafftSheet);
             $spreadsheet->setActiveSheetIndexByName($staffObj);
             $this->xrgStaffingParsTotalSheets($staffObj, $stafffingObjs, $currentStafftSheet);
         }
+
+        // Regional Staffing Pars Total
+        $currentStafftSheet = new Worksheet($spreadsheet, $regionName);
+        $currentStafftSheet->getTabColor()->setRGB('2f8232');
+        $spreadsheet->addSheet($currentStafftSheet);
+        $spreadsheet->setActiveSheetIndexByName($staffObj);
+        $this->xrgStaffingTotalRegionSheet($regionName, $stafffingObjs, $currentStafftSheet);
+
+
         // Embed Orignal File work sheets
         $originalFile = $this->xrgLoadSheet();
 
-        $clonedOriginal = clone $originalFile->getSheet(1);
-        $spreadsheet->addExternalSheet($clonedOriginal);
-       
-        $clonedLookup = clone $originalFile->getSheet(0);
-        $spreadsheet->addExternalSheet($clonedLookup);
+        $activeIndex = $spreadsheet->getActiveSheetIndex();
+
+        $clonedLookup = clone $originalFile->getSheet(1);
+        $clonedLookup->getTabColor()->setRGB('ffbf00');
+        $spreadsheet->addExternalSheet($clonedLookup, $activeIndex+2);
+
+        $clonedOriginal = clone $originalFile->getSheet(0);
+        $clonedOriginal->getTabColor()->setRGB('00b0f0');
+        $spreadsheet->addExternalSheet($clonedOriginal, $activeIndex+1);
 
         $originalFile->disconnectWorksheets();
         unset($originalFile);
         
         $writer = new Xlsx($spreadsheet);
+        $writer->setPreCalculateFormulas(false);
         $writer->save( XRG_PLUGIN_PATH . 'data/ASantana.xlsx' );
 
         // Clear memory
@@ -885,6 +897,321 @@ class XrgKpisReadSheet
 
         $contentIndex += 1;
         $sheet->setCellValue("P$contentIndex", $staffTotal);
+        $sheet->getStyle("P$contentIndex")->applyFromArray($allCellBorders);
+        $sheet->getStyle("P$contentIndex")->applyFromArray($leftCellBorders);
+        $sheet->getStyle("P$contentIndex")->applyFromArray($rightCellBorders);
+        $sheet->getStyle("P$contentIndex")->applyFromArray($bottomCellBorders);
+
+        return $sheet;
+    }
+
+    /**
+     * Create Staffing Pars worksheets, styles and Formulas
+     *
+     * @since    0.1
+     * @access   public
+     * @param    string $staffLocation
+     * @param    array $staffData Date object get from DB
+     * @param    Worksheet $sheet current active sheet in memory
+     * @return    Worksheet
+     */
+    public function xrgStaffingTotalRegionSheet(string $staffRegion, array $staffData, Worksheet $sheet): Worksheet
+    {
+        // Staffing Jobs group
+        $staffingPars = [
+            'Servers' => 'Server/Cocktail', 'Host' => 'Host',
+            'Bar' => 'Bartender', 'Bus' => 'Busser/Runner', 'Expo' => 'Expo',
+            'Cook' => 'Line Cook', 'Prep' => 'Prep Cook', 'Dish' => 'Dish'
+        ];
+
+        // Set Headers
+        $headerData = [
+            [$staffRegion, 'Have', 'In Training', 'Par', 'Variance', '']
+        ];
+
+        $sheet->fromArray(
+                $headerData,  // The data to set
+                NULL,        // Array values with this value will not be set
+                "A3"         // Top left coordinate of the worksheet range where
+        );
+
+        $headingArray = [
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => array('argb' => 'ffffc107')
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_DOTTED,
+                    'color' => ['argb' => '00000000'],
+                ]
+            ]
+        ];
+
+        $borderArray = [
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_DOTTED,
+                    'color' => ['argb' => '00000000'],
+                ]
+            ]
+        ];
+
+        $sheet->setCellValue("A1", "RD");
+
+        $contentIndex = 4;
+        $contentStart = 4;
+
+        $staffLocation = XrgHelperFunctions::xrgFormatArrayKeys($staffData['xrg_locations'][0]);
+
+        unset($staffData[$staffLocation]['max_tables']);
+
+        foreach($staffData[$staffLocation] as $staffType => $staffVal ) {
+            $staffParType = $staffingPars[$staffType];
+            if($staffType === 'Cocktail') :
+                continue;
+            endif;
+
+            $haveFormula = '=IF($A$1="RD",COUNTIFS(Original!M:M,$A$3,Original!O:O,A'.$contentIndex.'),COUNTIFS(Original!L:L,$A$3,Original!O:O,A'.$contentIndex.'))';
+            $inTrainingFormula = XrgHelperFunctions::xrgGenerateFoumula("C$contentIndex", $staffData['xrg_locations']);
+            $sheet->setCellValue("A$contentIndex", $staffParType);
+            $sheet->setCellValue("B$contentIndex", $haveFormula);
+            $sheet->setCellValue("C$contentIndex", "=SUM($inTrainingFormula)");
+            $sheet->setCellValue("D$contentIndex", 0);
+            $sheet->setCellValue("E$contentIndex", "=B$contentIndex - D$contentIndex");
+            
+            // Apply Style
+            $sheet->getStyle("A$contentIndex:E$contentIndex")->applyFromArray($headingArray);
+
+            $contentIndex += 2;
+        }
+        $contentEnd = $contentIndex;
+        $contentIndex++;
+        $sheet->setCellValue("A$contentIndex", 'Total Staff');
+        $sheet->setCellValue("B$contentIndex", "=SUM(B$contentStart:B$contentEnd)");
+        $sheet->setCellValue("C$contentIndex", "=SUM(C$contentStart:C$contentEnd)");
+        $sheet->setCellValue("D$contentIndex", "=SUM(D$contentStart:D$contentEnd)");
+        $sheet->setCellValue("E$contentIndex", "=B$contentIndex - D$contentIndex");
+
+         // Styling of Sheet
+         $sheet->getStyle("A$contentIndex:E$contentIndex")->getFont()->setBold(TRUE);
+         $sheet->getStyle("A3")->getFont()->setBold(TRUE);
+         $sheet->getStyle("A3:E$contentIndex")->applyFromArray($borderArray);
+
+         // Max Table Data
+         $contentIndex += 3;
+         $sheet->mergeCells("A$contentIndex:B$contentIndex");
+         $sheet->setCellValue("A$contentIndex", 'Max Tables to seat in restaurant:');
+         $sheet->setCellValue("C$contentIndex", "=SUM(".XrgHelperFunctions::xrgGenerateFoumula("C$contentIndex", $staffData['xrg_locations']).")");
+         $sheet->getStyle("C$contentIndex")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('ffff00');
+         
+         $contentIndex += 2;
+         $sheet->mergeCells("A$contentIndex:B$contentIndex");
+         $sheet->setCellValue("A$contentIndex", '4 Table Sections = Ser/Ctkl:');
+         $sheet->setCellValue("C$contentIndex", "=SUM(".XrgHelperFunctions::xrgGenerateFoumula("C$contentIndex", $staffData['xrg_locations']).")");
+         $sheet->getStyle("C$contentIndex")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('ffff00');
+
+
+         // Styling Header
+         $sheet->getStyle("B3:E3")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('ffff00');
+
+         foreach (range('A','F') as $col) {
+            $sheet->getColumnDimension($col)->setWidth(18, 'px');
+        }
+
+        // Hide Rows
+        $sheet->getRowDimension(1)->setVisible(FALSE);
+
+        // Staffing Pars Data sheet
+        $sheet = $this->xrgStaffingParsRegionData($staffData, $sheet);
+
+        $sheet->getStyle('E')->getNumberFormat()->setFormatCode('0_);[Red](0)');
+
+        return $sheet;
+    }
+
+    /**
+     * Create Staffing Pars Origin worksheets, styles and Formulas
+     *
+     * @since    0.1
+     * @access   public
+     * @param    array $staffData Date object get from DB
+     * @param    Worksheet $sheet current active sheet in memory
+     * @return    Worksheet
+     */
+    public function xrgStaffingParsRegionData(array $staffData, Worksheet $sheet): Worksheet
+    {
+        // Set Headers
+        $headerData = [
+             ['', '', 'Mon' , 'Tues', 'Wed', 'Thurs', 'Fri', 'Sat', 'Sun', '']
+         ];
+
+        foreach (range('G','P') as $col) {
+            $sheet->getColumnDimension($col)->setWidth(14, 'px');
+        }
+
+        $topCellBorders = [
+            'borders' => [
+                'top' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                    'color' => [
+                        'rgb' => '000000'
+                    ]
+                ]
+            ]
+        ];
+
+        $leftCellBorders = [
+            'borders' => [
+                'left' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                    'color' => [
+                        'rgb' => '000000'
+                    ]
+                ]
+            ]
+        ];
+
+        $rightCellBorders = [
+            'borders' => [
+                'right' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                    'color' => [
+                        'rgb' => '000000'
+                    ]
+                ]
+            ]
+        ];
+
+        $bottomCellBorders = [
+            'borders' => [
+                'bottom' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                    'color' => [
+                        'rgb' => '000000'
+                    ]
+                ]
+            ]
+        ];
+
+        $allCellBorders = [
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => [
+                        'rgb' => '000000'
+                    ]
+                ]
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+        ];
+
+        $sheet->fromArray(
+                $headerData,  // The data to set
+                NULL,        // Array values with this value will not be set
+                "G7"         // Top left coordinate of the worksheet range where
+        );
+        $sheet->getStyle("I7:O7")->applyFromArray($allCellBorders);
+
+        $contentIndex = 8;
+
+        $staffLocation = XrgHelperFunctions::xrgFormatArrayKeys($staffData['xrg_locations'][0]);
+
+        foreach($staffData[$staffLocation] as $staffType => $staffVal ) {
+            // For Grand Totals
+            $sheet->setCellValue("G$contentIndex", $staffType);
+            $sheet->setCellValue("H$contentIndex", 'am');
+            foreach(range('I', 'P') as $ind) {
+                $sheet->setCellValue($ind.$contentIndex, "=SUM(".XrgHelperFunctions::xrgGenerateFoumula($ind.$contentIndex, $staffData['xrg_locations']).")");
+            }
+           
+            $sheet->getStyle("G$contentIndex:P$contentIndex")->applyFromArray($allCellBorders);
+            $sheet->getStyle("G$contentIndex:P$contentIndex")->applyFromArray($topCellBorders);
+            $sheet->getStyle("G$contentIndex")->applyFromArray($leftCellBorders);
+            $sheet->getStyle("P$contentIndex")->applyFromArray($rightCellBorders);
+            $sheet->getStyle("G$contentIndex")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('8ef2ff');
+           
+            $contentIndex += 1;
+            $sheet->setCellValue("G$contentIndex", '');
+            $sheet->setCellValue("H$contentIndex", 'pm');
+            foreach(range('I', 'P') as $ind) {
+                $sheet->setCellValue($ind.$contentIndex, "=SUM(".XrgHelperFunctions::xrgGenerateFoumula($ind.$contentIndex, $staffData['xrg_locations']).")");
+            }
+
+            $sheet->getStyle("G$contentIndex:P$contentIndex")->applyFromArray($allCellBorders);
+            $sheet->getStyle("G$contentIndex")->applyFromArray($leftCellBorders);
+            $sheet->getStyle("P$contentIndex")->applyFromArray($rightCellBorders);
+            $sheet->getStyle("G$contentIndex:P$contentIndex")->applyFromArray($bottomCellBorders);
+           
+            $contentIndex += 1;
+            $sheet->setCellValue("P$contentIndex", 'Ttl ' . $staffType);
+            $sheet->getStyle("P$contentIndex")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('ffff00');
+            $sheet->getStyle("P$contentIndex")->applyFromArray($allCellBorders);
+            $sheet->getStyle("P$contentIndex")->applyFromArray($leftCellBorders);
+            $sheet->getStyle("P$contentIndex")->applyFromArray($rightCellBorders);
+
+            $contentIndex += 1;
+            $sheet->setCellValue("P$contentIndex", "=SUM(".XrgHelperFunctions::xrgGenerateFoumula("P$contentIndex", $staffData['xrg_locations']).")");
+            $sheet->getStyle("P$contentIndex")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('ffff00');
+            $sheet->getStyle("P$contentIndex")->applyFromArray($allCellBorders);
+            $sheet->getStyle("P$contentIndex")->applyFromArray($leftCellBorders);
+            $sheet->getStyle("P$contentIndex")->applyFromArray($rightCellBorders);
+            $sheet->getStyle("P$contentIndex")->applyFromArray($bottomCellBorders);
+
+            $contentIndex += 1;
+        }
+
+        // Header area
+        $sheet->mergeCells('G2:P2')->setCellValue('G2', 'Staffing Pars');
+        $sheet->getStyle('G2')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('c1c1c1');
+        $sheet->getStyle('G2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $contentIndex = 3;
+        $sheet->setCellValue("G$contentIndex", 'Total Count');
+        $sheet->setCellValue("H$contentIndex", 'am');
+        foreach(range('I', 'P') as $ind) {
+            $sheet->setCellValue($ind.$contentIndex, "=SUM(".XrgHelperFunctions::xrgGenerateFoumula($ind.$contentIndex, $staffData['xrg_locations']).")");
+        }
+        $sheet->getStyle("G$contentIndex:P$contentIndex")->applyFromArray($allCellBorders);
+        $sheet->getStyle("G$contentIndex:P$contentIndex")->applyFromArray($topCellBorders);
+        $sheet->getStyle("G$contentIndex")->applyFromArray($leftCellBorders);
+        $sheet->getStyle("P$contentIndex")->applyFromArray($rightCellBorders);
+        $sheet->getStyle("G$contentIndex")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('8ef2ff');
+        
+        $contentIndex += 1;
+        $sheet->setCellValue("G$contentIndex", '');
+        $sheet->setCellValue("H$contentIndex", 'pm');
+        foreach(range('I', 'P') as $ind) {
+            $sheet->setCellValue($ind.$contentIndex, "=SUM(".XrgHelperFunctions::xrgGenerateFoumula($ind.$contentIndex, $staffData['xrg_locations']).")");
+        }
+        $sheet->getStyle("G$contentIndex:P$contentIndex")->applyFromArray($allCellBorders);
+        $sheet->getStyle("G$contentIndex")->applyFromArray($leftCellBorders);
+        $sheet->getStyle("P$contentIndex")->applyFromArray($rightCellBorders);
+        $sheet->getStyle("G$contentIndex:P$contentIndex")->applyFromArray($bottomCellBorders);
+        
+        $contentIndex += 1;
+        $sheet->setCellValue("P$contentIndex", 'Ttl Staff');
+        $sheet->getStyle("P$contentIndex")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('ffff00');
+        $sheet->getStyle("P$contentIndex")->applyFromArray($allCellBorders);
+        $sheet->getStyle("P$contentIndex")->applyFromArray($leftCellBorders);
+        $sheet->getStyle("P$contentIndex")->applyFromArray($rightCellBorders);
+
+        $contentIndex += 1;
+        $sheet->setCellValue("P$contentIndex", "=SUM(".XrgHelperFunctions::xrgGenerateFoumula("P$contentIndex", $staffData['xrg_locations']).")");
         $sheet->getStyle("P$contentIndex")->applyFromArray($allCellBorders);
         $sheet->getStyle("P$contentIndex")->applyFromArray($leftCellBorders);
         $sheet->getStyle("P$contentIndex")->applyFromArray($rightCellBorders);
