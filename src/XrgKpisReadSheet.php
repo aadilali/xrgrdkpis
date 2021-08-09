@@ -47,7 +47,7 @@ class XrgKpisReadSheet
     }
 
     /**
-     * Create re-write rule for arbitrary url.
+     * Load spreadsheet having Original and Lookup sheets from file to memory
      *
      * @since    0.1
      * @access   public
@@ -357,9 +357,12 @@ class XrgKpisReadSheet
         }
 
         // Regional Staffing Pars Total
+        $activeIndex = $spreadsheet->getActiveSheetIndex();
+        $locationIndex = count($stafffingObjs['xrg_locations']) - 1;
+
         $currentStafftSheet = new Worksheet($spreadsheet, $regionName);
         $currentStafftSheet->getTabColor()->setRGB('2f8232');
-        $spreadsheet->addSheet($currentStafftSheet);
+        $spreadsheet->addSheet($currentStafftSheet, ($activeIndex - $locationIndex));
         $spreadsheet->setActiveSheetIndexByName($staffObj);
         $this->xrgStaffingTotalRegionSheet($regionName, $stafffingObjs, $currentStafftSheet);
 
@@ -371,11 +374,11 @@ class XrgKpisReadSheet
 
         $clonedLookup = clone $originalFile->getSheet(1);
         $clonedLookup->getTabColor()->setRGB('ffbf00');
-        $spreadsheet->addExternalSheet($clonedLookup, $activeIndex+2);
+        $spreadsheet->addExternalSheet($clonedLookup);
 
         $clonedOriginal = clone $originalFile->getSheet(0);
         $clonedOriginal->getTabColor()->setRGB('00b0f0');
-        $spreadsheet->addExternalSheet($clonedOriginal, $activeIndex+1);
+        $spreadsheet->addExternalSheet($clonedOriginal);
 
         $originalFile->disconnectWorksheets();
         unset($originalFile);
@@ -653,8 +656,7 @@ class XrgKpisReadSheet
 
             $contentIndex += 2;
         }
-        $contentEnd = $contentIndex;
-        $contentIndex++;
+        $contentEnd = $contentIndex - 2;
         $sheet->setCellValue("A$contentIndex", 'Total Staff');
         $sheet->setCellValue("B$contentIndex", "=SUM(B$contentStart:B$contentEnd)");
         $sheet->setCellValue("C$contentIndex", "=SUM(C$contentStart:C$contentEnd)");
@@ -917,6 +919,11 @@ class XrgKpisReadSheet
      */
     public function xrgStaffingTotalRegionSheet(string $staffRegion, array $staffData, Worksheet $sheet): Worksheet
     {
+         // Staffing Pars Data sheet
+         $staffLocation = XrgHelperFunctions::xrgFormatArrayKeys($staffData['xrg_locations'][0]);
+         unset($staffData[$staffLocation]['max_tables']);
+         $parTotalArr = $this->xrgStaffingParsRegionData($staffData, $sheet);
+
         // Staffing Jobs group
         $staffingPars = [
             'Servers' => 'Server/Cocktail', 'Host' => 'Host',
@@ -972,22 +979,22 @@ class XrgKpisReadSheet
         $contentIndex = 4;
         $contentStart = 4;
 
-        $staffLocation = XrgHelperFunctions::xrgFormatArrayKeys($staffData['xrg_locations'][0]);
-
-        unset($staffData[$staffLocation]['max_tables']);
-
         foreach($staffData[$staffLocation] as $staffType => $staffVal ) {
             $staffParType = $staffingPars[$staffType];
-            if($staffType === 'Cocktail') :
+            $staffParSum = "=$parTotalArr[$staffType]['par_total']";
+            if($staffType === 'Servers') {
+                $staffParSum = "=SUM(" . $parTotalArr['Servers']['par_total'] . "," . $parTotalArr['Cocktail']['par_total'] . ")";
+            }
+            if($staffType === 'Cocktail') {
                 continue;
-            endif;
+            }
 
             $haveFormula = '=IF($A$1="RD",COUNTIFS(Original!M:M,$A$3,Original!O:O,A'.$contentIndex.'),COUNTIFS(Original!L:L,$A$3,Original!O:O,A'.$contentIndex.'))';
             $inTrainingFormula = XrgHelperFunctions::xrgGenerateFoumula("C$contentIndex", $staffData['xrg_locations']);
             $sheet->setCellValue("A$contentIndex", $staffParType);
             $sheet->setCellValue("B$contentIndex", $haveFormula);
             $sheet->setCellValue("C$contentIndex", "=SUM($inTrainingFormula)");
-            $sheet->setCellValue("D$contentIndex", 0);
+            $sheet->setCellValue("D$contentIndex", $staffParSum);
             $sheet->setCellValue("E$contentIndex", "=B$contentIndex - D$contentIndex");
             
             // Apply Style
@@ -995,8 +1002,7 @@ class XrgKpisReadSheet
 
             $contentIndex += 2;
         }
-        $contentEnd = $contentIndex;
-        $contentIndex++;
+        $contentEnd = $contentIndex - 2;
         $sheet->setCellValue("A$contentIndex", 'Total Staff');
         $sheet->setCellValue("B$contentIndex", "=SUM(B$contentStart:B$contentEnd)");
         $sheet->setCellValue("C$contentIndex", "=SUM(C$contentStart:C$contentEnd)");
@@ -1032,9 +1038,6 @@ class XrgKpisReadSheet
         // Hide Rows
         $sheet->getRowDimension(1)->setVisible(FALSE);
 
-        // Staffing Pars Data sheet
-        $sheet = $this->xrgStaffingParsRegionData($staffData, $sheet);
-
         $sheet->getStyle('E')->getNumberFormat()->setFormatCode('0_);[Red](0)');
 
         return $sheet;
@@ -1047,10 +1050,12 @@ class XrgKpisReadSheet
      * @access   public
      * @param    array $staffData Date object get from DB
      * @param    Worksheet $sheet current active sheet in memory
-     * @return    Worksheet
+     * @return    array
      */
-    public function xrgStaffingParsRegionData(array $staffData, Worksheet $sheet): Worksheet
+    public function xrgStaffingParsRegionData(array $staffData, Worksheet $sheet): array
     {
+        // Return Array
+        $parTotal = [];
         // Set Headers
         $headerData = [
              ['', '', 'Mon' , 'Tues', 'Wed', 'Thurs', 'Fri', 'Sat', 'Sun', '']
@@ -1172,6 +1177,9 @@ class XrgKpisReadSheet
             $sheet->getStyle("P$contentIndex")->applyFromArray($rightCellBorders);
             $sheet->getStyle("P$contentIndex")->applyFromArray($bottomCellBorders);
 
+            // Populate Par Total array
+            $parTotal[$staffType]['par_total'] = "P$contentIndex";
+
             $contentIndex += 1;
         }
 
@@ -1217,7 +1225,7 @@ class XrgKpisReadSheet
         $sheet->getStyle("P$contentIndex")->applyFromArray($rightCellBorders);
         $sheet->getStyle("P$contentIndex")->applyFromArray($bottomCellBorders);
 
-        return $sheet;
+        return $parTotal;
     }
 
     /**

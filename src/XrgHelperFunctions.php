@@ -123,7 +123,7 @@ final class XrgHelperFunctions
     }
 
     /**
-     * Create formula based on locations and index
+     * Create formula based on locations and index               [1,2,3]  [1,4,9]   function double(n) { return n*n; }
      * @since    0.1
      * @access   public
      * @param string $index current index of cell
@@ -138,5 +138,26 @@ final class XrgHelperFunctions
         }, $locations);
 
         return (implode(',', $resultedArray));
+    }
+
+    /**
+     * Get Staff count from array based on type and location
+     * @since    0.1
+     * @access   public
+     * @param string $type type of staff job
+     * @param array $staffData array containing data
+     * @return int $staffCount
+     */ 
+    public static function xrgCountStaffByType(string $type, array $staffData): int
+    {
+        $staffCount = 0;
+
+        foreach($staffData as $staff) {
+            if($staff === $type) {
+                $staffCount++;
+            }
+        }
+
+        return $staffCount;
     }
 }

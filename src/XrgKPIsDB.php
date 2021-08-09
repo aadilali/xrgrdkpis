@@ -33,8 +33,10 @@ class XrgKPIsDB
      */
     public function __construct()
     {
-        $this->xrgKPIsTable = 'wp_xrg_kpis';
-        $this->xrgStaffingTable = 'wp_xrg_staffing_pars';
+        global $wpdb;
+
+        $this->xrgKPIsTable = $wpdb->prefix . 'xrg_kpis';
+        $this->xrgStaffingTable = $wpdb->prefix . 'xrg_staffing_pars';
     }
 
     /**

@@ -3,6 +3,9 @@
 use XRG\RD\XrgRdKpis;
 use XRG\RD\XrgHelperFunctions;
 
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+
 // Action to download File
 if(isset($_GET['gen-sheet']) && $_GET['gen-sheet'] == 1) {
     XrgRdKpis::instance()->xrgLoadSpreadSheet()->xrgGenerateSpreadSheet('ASantana');
@@ -21,6 +24,26 @@ if(isset($_GET['gen-sheet']) && $_GET['gen-sheet'] == 1) {
         echo 'file not found';
     }
 }
+
+// Staffing Par Have Value container
+$staffingParHave = [];
+// Load Original and Lookup file in memory
+$originalFile = XrgRdKpis::instance()->xrgLoadSpreadSheet()->xrgLoadSheet();
+$clonedOriginal = $originalFile->getSheet(0);
+
+foreach ($clonedOriginal->getRowIterator() as $rowIndex => $row) {
+    $cellIterator = $row->getCellIterator('M');
+    $cellIterator->setIterateOnlyExistingCells(TRUE);
+    foreach ($cellIterator as $key => $cell) {
+        if($cell->getValue() === 'ASantana') {
+           $loc = XrgHelperFunctions::xrgFormatArrayKeys($clonedOriginal->getCell('L' . $rowIndex)->getValue());
+           $staffingParHave[$loc][] = $clonedOriginal->getCell('O' . $rowIndex)->getValue();
+        }
+    }
+}
+
+$originalFile->disconnectWorksheets();
+unset($originalFile);
 
 // Get data from DB class
 $sheetData = XrgRdKpis::instance()->xrgDBInstance()->xrgGetRegionalData( 'ASantana' );
@@ -385,8 +408,15 @@ get_header();
         </div>
         <?php endforeach; ?>
         <?php 
+        // Initialize array for Regional Total
+        $regionalTotal = [];
+        $temp['rg_total'] = [
+            'am' => ['Mon' => 0, 'Tues' => 0, 'Wed' => 0, 'Thurs' => 0, 'Fri' => 0, 'Sat' => 0, 'Sun' => 0],
+            'pm' => ['Mon' => 0, 'Tues' => 0, 'Wed' => 0, 'Thurs' => 0, 'Fri' => 0, 'Sat' => 0, 'Sun' => 0]
+        ];
+
         foreach($stafffingData['xrg_locations'] as $staffObj) : 
-            $sheetId = XrgHelperFunctions::xrgFormatArrayKeys($staffObj); 
+            $sheetId = XrgHelperFunctions::xrgFormatArrayKeys($staffObj);
         ?>
         <!-- TABS CONTENT FOR STAFFING PARS  -->
         <div id="<?php echo $sheetId; ?>" class="period-tab-content">
@@ -416,24 +446,27 @@ get_header();
                                     $parTotal = 0;
                                     $maxTables = $stafffingData[$sheetId]['max_tables'];
                                     unset($stafffingData[$sheetId]['max_tables']);
-
+                                   
                                     foreach($stafffingData[$sheetId] as $staffType => $staffVal ) :
+                                        if($staffType === 'Cocktail') :
+                                            $regionalTotal[$staffType]['have'] = 0;
+                                            continue;
+                                        endif;
+
                                         $staffParType = $staffingPars[$staffType];
                                         $staffInTraining = $staffVal['in_training'];
                                         $staffPars = $staffVal['total'];
+                                        $haveVal = XrgHelperFunctions::xrgCountStaffByType($staffParType, $staffingParHave[$sheetId]);
 
                                         if($staffType === 'Servers') :
                                             $staffInTraining += $stafffingData[$sheetId]['Cocktail']['in_training'];
                                             $staffPars += $stafffingData[$sheetId]['Cocktail']['total'];
                                         endif;
-                                        if($staffType === 'Cocktail') :
-                                            continue;
-                                        endif;
 
-                                        $haveVal = 20;
                                         $haveValTotal += $haveVal;
                                         $inTrainingTotal += $staffInTraining;
                                         $parTotal += $staffPars;
+                                        $regionalTotal[$staffType]['have'] += $haveVal;
                                     ?>
                                     <tr>
                                         <td><?php echo $staffParType; ?></td>
@@ -465,6 +498,9 @@ get_header();
                                     </tr>
                                 </tbody>
                             </table>
+                            <?php
+                            $regionalTotal['max_tables'] += $maxTables;
+                            ?>
                         </td>
                         <td class="table-divider-pars"></td>
                         <td class="table-containers staffing-table">
@@ -494,8 +530,13 @@ get_header();
                                     ];
                                     $staffTotal = 0;
                                     foreach($stafffingData[$sheetId] as $staffType => $staffVal ) :
+                                        $regionalTotal[$staffType]['rg_total'] = isset($regionalTotal[$staffType]['rg_total']) ? $regionalTotal[$staffType]['rg_total'] : $temp['rg_total'];
                                         $grandTotal = XrgHelperFunctions::xrgSumKeysValue($staffVal, $grandTotal);
                                         $staffTotal += $staffVal['total'];
+
+                                        $regionalTotal[$staffType]['in_training'] += $staffVal['in_training'];
+                                        $regionalTotal[$staffType]['par_total'] += $staffVal['total'];
+                                        $regionalTotal[$staffType]['rg_total'] = XrgHelperFunctions::xrgSumKeysValue($staffVal, $regionalTotal[$staffType]['rg_total']);
                                     ?>
                                     <tr>
                                         <td class="staff-type-bg"><?php echo $staffType; ?></td>
@@ -563,7 +604,185 @@ get_header();
             </div>
         </div>
         <?php endforeach; ?>
+        <!-- TABS CONTENT FOR STAFFING PARS REGIONAL TOTAL -->
+        <div id="ASantana" class="period-tab-content">
+            <div class="xrg-table-container">
+                <!-- Main Table  -->
+                <table class="main-table-wrapper">
+                    <tr>
+                        <td class="table-containers pars-total-table">
+                            <table>
+                                <thead>
+                                    <tr class="weekly-heading">
+                                        <th colspan="5"></th>
+                                    </tr>
+                                    <tr>
+                                        <th>ASantana</th>
+                                        <th>Have</th>
+                                        <th>In Training</th>
+                                        <th>Par</th>
+                                        <th>Variance</th>
 
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    $haveValTotal = 0;
+                                    $inTrainingTotal = 0;
+                                    $parTotal = 0;
+                                    $regionalMaxTables = $regionalTotal['max_tables'];
+                                    
+                                    unset($regionalTotal['max_tables']);
+
+                                    foreach($regionalTotal as $staffType => $staffVal ) :
+                                        $staffParType = $staffingPars[$staffType];
+                                        $staffInTraining = $staffVal['in_training'];
+                                        $staffPars = $staffVal['par_total'];
+                                        $haveVal = $staffVal['have'];
+
+                                        if($staffType === 'Servers') :
+                                            $staffInTraining += $regionalTotal['Cocktail']['in_training'];
+                                            $staffPars += $regionalTotal['Cocktail']['par_total'];
+                                            $haveVal += $regionalTotal['Cocktail']['have'];
+                                        endif;
+
+                                        if($staffType === 'Cocktail') :
+                                            continue;
+                                        endif;
+
+                                        $haveValTotal += $haveVal;
+                                        $inTrainingTotal += $staffInTraining;
+                                        $parTotal += $staffPars;
+                                    ?>
+                                    <tr>
+                                        <td><?php echo $staffParType; ?></td>
+                                        <td><?php echo $haveVal; ?></td>
+                                        <td><?php echo $staffInTraining; ?></td>
+                                        <td><?php echo $staffPars; ?></td>
+                                        <td><?php echo XrgHelperFunctions::xrgFormatValue(($haveVal - $staffPars), 'variance'); ?></td>   <!-- Have - Par  -->
+                                    </tr>
+                                    <tr><!-- Empty Row  --><td colspan="5" class="empty-row"></td></tr>
+                                    <?php endforeach ?>
+                                    <tr>
+                                        <td>Total Staff</td>
+                                        <td><?php echo $haveValTotal; ?></td>
+                                        <td><?php echo $inTrainingTotal; ?></td>
+                                        <td><?php echo $parTotal; ?></td>
+                                        <td><?php echo XrgHelperFunctions::xrgFormatValue(($haveValTotal - $parTotal), 'variance'); ?></td>   <!-- Have - Par  -->
+                                    </tr>
+                                    <tr><!-- Empty Row  --><td colspan="5" class="empty-row"></td></tr>
+                                    <tr><!-- Empty Row  --><td colspan="5" class="empty-row"></td></tr>
+                                    <tr><!-- Empty Row  --><td colspan="5" class="empty-row"></td></tr>
+                                    <tr>
+                                        <td colspan="2">Max Tables to seat in restaurant:</td>
+                                        <td class="bg-color-yellow"><?php echo $regionalMaxTables; ?></td>
+                                    </tr>
+                                    <tr><!-- Empty Row  --><td colspan="5" class="empty-row"></td></tr>
+                                    <tr>
+                                        <td colspan="2">4 Table Sections = Ser/Ctkl:</td>
+                                        <td class="bg-color-yellow"><?php echo ceil($regionalMaxTables / 4); ?></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                        <td class="table-divider-pars"></td>
+                        <td class="table-containers staffing-table">
+                            <table>
+                                <thead>
+                                    <tr class="weekly-heading">
+                                        <th colspan="10">Staffing Pars</th>
+                                    </tr>
+                                    <tr>
+                                        <th></th>
+                                        <th></th>
+                                        <th>Mon</th>
+                                        <th>Tues</th>
+                                        <th>Wed</th>
+                                        <th>Thurs</th>
+                                        <th>Fri</th>
+                                        <th>Sat</th>
+                                        <th>Sun</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php 
+                                    $grandTotal = [
+                                        'am' => ['Mon' => 0, 'Tues' => 0, 'Wed' => 0, 'Thurs' => 0, 'Fri' => 0, 'Sat' => 0, 'Sun' => 0],
+                                        'pm' => ['Mon' => 0, 'Tues' => 0, 'Wed' => 0, 'Thurs' => 0, 'Fri' => 0, 'Sat' => 0, 'Sun' => 0]
+                                    ];
+                                    $staffTotal = 0;
+                                    $staffTypeVal = [];
+                                    foreach($regionalTotal as $staffType => $staffVal) :
+                                        $staffTypeVal = $staffVal['rg_total'];
+                                        $grandTotal = XrgHelperFunctions::xrgSumKeysValue($staffTypeVal, $grandTotal);
+                                        $staffTotal += $staffVal['par_total'];
+                                    ?>
+                                    <tr>
+                                        <td class="staff-type-bg"><?php echo $staffType; ?></td>
+                                        <td>am</td>
+                                        <td><?php echo $staffTypeVal['am']['Mon']; ?></td>
+                                        <td><?php echo $staffTypeVal['am']['Tues']; ?></td>
+                                        <td><?php echo $staffTypeVal['am']['Wed']; ?></td>
+                                        <td><?php echo $staffTypeVal['am']['Thurs']; ?></td>
+                                        <td><?php echo $staffTypeVal['am']['Fri']; ?></td>
+                                        <td><?php echo $staffTypeVal['am']['Sat']; ?></td>
+                                        <td><?php echo $staffTypeVal['am']['Sun']; ?></td>
+                                        <td><?php echo array_sum($staffTypeVal['am']); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>pm</td>
+                                        <td><?php echo $staffTypeVal['pm']['Mon']; ?></td>
+                                        <td><?php echo $staffTypeVal['pm']['Tues']; ?></td>
+                                        <td><?php echo $staffTypeVal['pm']['Wed']; ?></td>
+                                        <td><?php echo $staffTypeVal['pm']['Thurs']; ?></td>
+                                        <td><?php echo $staffTypeVal['pm']['Fri']; ?></td>
+                                        <td><?php echo $staffTypeVal['pm']['Sat']; ?></td>
+                                        <td><?php echo $staffTypeVal['pm']['Sun']; ?></td>
+                                        <td><?php echo array_sum($staffTypeVal['pm']); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="9"></td>
+                                        <td class="bg-color-yellow"><?php echo $staffVal['par_total']; ?></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                    <!-- Grand Total  -->
+                                    <tr>
+                                        <td class="staff-type-bg">Total Count</td>
+                                        <td>am</td>
+                                        <td><?php echo $grandTotal['am']['Mon']; ?></td>
+                                        <td><?php echo $grandTotal['am']['Tues']; ?></td>
+                                        <td><?php echo $grandTotal['am']['Wed']; ?></td>
+                                        <td><?php echo $grandTotal['am']['Thurs']; ?></td>
+                                        <td><?php echo $grandTotal['am']['Fri']; ?></td>
+                                        <td><?php echo $grandTotal['am']['Sat']; ?></td>
+                                        <td><?php echo $grandTotal['am']['Sun']; ?></td>
+                                        <td><?php echo array_sum($grandTotal['am']); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>pm</td>
+                                        <td><?php echo $grandTotal['pm']['Mon']; ?></td>
+                                        <td><?php echo $grandTotal['pm']['Tues']; ?></td>
+                                        <td><?php echo $grandTotal['pm']['Wed']; ?></td>
+                                        <td><?php echo $grandTotal['pm']['Thurs']; ?></td>
+                                        <td><?php echo $grandTotal['pm']['Fri']; ?></td>
+                                        <td><?php echo $grandTotal['pm']['Sat']; ?></td>
+                                        <td><?php echo $grandTotal['pm']['Sun']; ?></td>
+                                        <td><?php echo array_sum($grandTotal['pm']); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="9"></td>
+                                        <td class="bg-color-yellow"><?php echo $staffTotal; ?></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
         <!--  Tabs Button  -->
         <div class="tabs-btn-wrapper">
         <?php
@@ -572,6 +791,10 @@ get_header();
         ?>
             <button class="periods-tab view-template-tabs" data-period-id="<?php echo $period; ?>" ><?php echo $sheetObj->period_name; ?></button>
             <?php endforeach; ?>
+            <!--  Regional Total Tab  -->
+            <?php if(!empty($regionalTotal)): ?>
+                <button class="periods-tab view-template-tabs" data-period-id="ASantana" >ASantana</button>
+            <?php endif; ?>
         <?php
             foreach($stafffingData['xrg_locations'] as $staffObj) : 
                 $sheetId = XrgHelperFunctions::xrgFormatArrayKeys($staffObj); 
