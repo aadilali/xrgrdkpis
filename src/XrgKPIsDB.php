@@ -75,7 +75,6 @@ class XrgKPIsDB
         } else {
             $this->xrgInsertWeeklyData($periodName, $regionName, $weeklyKPIs, $weeklyLabor);
         }
-
     }
 
     /**

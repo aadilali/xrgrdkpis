@@ -9,7 +9,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 // Action to download File
 if(isset($_GET['gen-sheet']) && $_GET['gen-sheet'] == 1) {
     XrgRdKpis::instance()->xrgLoadSpreadSheet()->xrgGenerateSpreadSheet('ASantana');
-  //XrgRdKpis::instance()->xrgLoadSpreadSheet()->xrgWriteHtmlTable();
+
     $file =  XRG_PLUGIN_PATH . 'data/ASantana.xlsx';
     if (file_exists($file)) {
         header('Content-Description: File Transfer');

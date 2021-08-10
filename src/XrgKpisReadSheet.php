@@ -363,7 +363,7 @@ class XrgKpisReadSheet
         $currentStafftSheet = new Worksheet($spreadsheet, $regionName);
         $currentStafftSheet->getTabColor()->setRGB('2f8232');
         $spreadsheet->addSheet($currentStafftSheet, ($activeIndex - $locationIndex));
-        $spreadsheet->setActiveSheetIndexByName($staffObj);
+        $spreadsheet->setActiveSheetIndexByName($regionName);
         $this->xrgStaffingTotalRegionSheet($regionName, $stafffingObjs, $currentStafftSheet);
 
 
@@ -378,7 +378,14 @@ class XrgKpisReadSheet
 
         $clonedOriginal = clone $originalFile->getSheet(0);
         $clonedOriginal->getTabColor()->setRGB('00b0f0');
+
         $spreadsheet->addExternalSheet($clonedOriginal);
+        $spreadsheet->setActiveSheetIndexByName('Original');
+
+        $spreadsheet->getActiveSheet()->getStyle('A1:J1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('bfd2e2');
+        $spreadsheet->getActiveSheet()->getStyle('K1:O1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('ffff00');
+
+        $spreadsheet->setActiveSheetIndexByName($regionName);
 
         $originalFile->disconnectWorksheets();
         unset($originalFile);

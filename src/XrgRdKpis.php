@@ -141,8 +141,8 @@ class XrgRdKpis
         ) $charsetCollate;";
     
         require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
-        dbDelta( $tableStructureKPI );
-        dbDelta( $tableStructureStaffing );
+        dbDelta( [$tableStructureKPI, $tableStructureStaffing] );
+        //dbDelta( $tableStructureStaffing );
     }
 
 }
