@@ -3,9 +3,6 @@
 use XRG\RD\XrgRdKpis;
 use XRG\RD\XrgHelperFunctions;
 
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-
 // Action to download File
 if(isset($_GET['gen-sheet']) && $_GET['gen-sheet'] == 1) {
     XrgRdKpis::instance()->xrgLoadSpreadSheet()->xrgGenerateSpreadSheet('ASantana');

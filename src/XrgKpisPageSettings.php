@@ -36,13 +36,20 @@ class XrgKpisPageSettings
         $this->xrgEndpoint = $endpoint;
         $this->xrgTemplateName = $templateName;
 
+        // Flush Parmalink Cache
+        // register_activation_hook( XRG_PLUGIN_PATH.'xrg-rd-kpis.php', [$this, 'xrgParmalinkOption'] );
+        // register_deactivation_hook( XRG_PLUGIN_PATH.'xrg-rd-kpis.php', [$this, 'xrgParmalinkOption'] );
+    }
+
+    /**
+     * register callbacks against hooks.
+     * @since    0.1
+     */
+    public function xrgHandleHooks(): void
+    {
         add_action('generate_rewrite_rules', [$this, 'xrgEndpointRule']);
         add_filter('template_include', [$this, 'xrgLoadTemplate'], 20);
         add_filter('query_vars', [$this, 'registerQueryVars']);
-
-        // // Flush Parmalink Cache
-        // register_activation_hook( XRG_PLUGIN_PATH.'xrg-rd-kpis.php', [$this, 'xrgParmalinkOption'] );
-        // register_deactivation_hook( XRG_PLUGIN_PATH.'xrg-rd-kpis.php', [$this, 'xrgParmalinkOption'] );
     }
 
     /**

@@ -1,0 +1,97 @@
+.regional-data-container {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+}
+.region-container {
+    padding: 20px;
+    margin-bottom: 30px;
+    border: 1px solid #000;
+    flex-basis: 20%;
+    margin-right: 2px;
+}
+.location-container {
+    margin: 20px 30px;
+    padding: 20px;
+    border: 1px dashed #12627B;
+}
+.location-container .field-container {
+    margin-bottom: 5px;
+}
+.regional-data-container label {
+    font-weight: 600;
+}
+.regional-data-container .add-location-btn {
+    margin-top: 10px;
+    min-height: 34px;
+}
+.add-region-btn {
+    margin-right: 20px;
+}
+.regional-data-container .add-location-btn::before {
+   content: ' ';
+   width: 24px;
+   height: 24px;
+   background: url('../imgs/add_location.svg') no-repeat;
+   display: inline-block;
+   vertical-align: middle;
+   margin-right: 10px;
+   background-size: cover;
+}
+.add-region-btn::before {
+   content: ' ';
+   width: 24px;
+   height: 28px;
+   background: url('../imgs/add_region.svg') no-repeat;
+   display: inline-block;
+   vertical-align: middle;
+   margin-right: 10px;
+   background-size: cover;
+}
+.del-region-btn {
+    float: right;
+    background: #ca0e01;
+    border-radius: 50%;
+    height: 42px;
+    width: 42px;
+    cursor: pointer;
+}
+.del-region-btn:hover {
+    background: #000;
+}
+.del-region-btn::before {
+    content: ' ';
+    width: 100%;
+    height: 32px;
+    background: url('../imgs/del_icon.svg') no-repeat;
+    display: inline-block;
+    margin-top: 6px;
+    background-position: center center;
+}
+.del-location-btn {
+    display: inline-block;
+    background: #000;
+    border-radius: 50%;
+    height: 26px;
+    width: 26px;
+    cursor: pointer;
+    vertical-align: middle;
+}
+.del-location-btn:hover {
+    background: #fbff01;
+}
+.del-location-btn::before {
+    content: ' ';
+    width: 100%;
+    height: 15px;
+    background: url('../imgs/del_icon_2.svg') no-repeat;
+    display: inline-block;
+    margin-top: 7px;
+    margin-left: 1px;
+    background-position: center center;
+}
+
+.xrg-settings-form .button-primary {
+    margin-left: 30px;
+    padding: 1px 40px;
+}

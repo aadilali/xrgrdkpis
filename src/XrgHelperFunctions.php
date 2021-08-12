@@ -31,7 +31,11 @@ final class XrgHelperFunctions
         // Convert array key to lower case 
         $arrayKey = strtolower($arrayKey);
         
-        // Replace space with _ (underscore) in multi word array key
+        // Replace space with _ (underscore) in multi word array key remove special characters
+        $arrayKey = preg_replace( '/\'+/','', $arrayKey);
+        $arrayKey = preg_replace( '/\-+/','', $arrayKey);
+        $arrayKey = preg_replace( '/\,+/','', $arrayKey);
+
         return preg_replace( '/\s+/','_', $arrayKey);
     }
 
@@ -123,7 +127,7 @@ final class XrgHelperFunctions
     }
 
     /**
-     * Create formula based on locations and index               [1,2,3]  [1,4,9]   function double(n) { return n*n; }
+     * Create formula based on locations and index
      * @since    0.1
      * @access   public
      * @param string $index current index of cell
