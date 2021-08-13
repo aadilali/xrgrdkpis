@@ -20,11 +20,13 @@ class XrgGeneralSettings
     /**
      * register callbacks against hooks.
      * @since    0.1
+     * @access   public
+     * @return   void
      */
     public function xrgHandleHooks(): void
     {
-        // Create table on plugin activation
-        register_activation_hook(XRG_PLUGIN_PATH.'xrg-rd-kpis.php', [$this, 'xrgCreateTable']);
+        // Create table and Default Page on plugin activation
+        register_activation_hook(XRG_PLUGIN_PATH.'xrg-rd-kpis.php', [$this, 'xrgAfterActivation']);
 
         // Create settings page in admin panel
         add_action('admin_menu', [$this, 'xrgCreateAdminMenu']);
@@ -44,11 +46,27 @@ class XrgGeneralSettings
     }
 
     /**
+     * Create Tables to the DB and Default page creation on plugin activation hook
+     *
+     * @since    0.1
+     * @access   public
+     * @return   void
+     */
+    public function xrgAfterActivation(): void
+    {
+        // Create Table
+        $this->xrgCreateTable();
+
+        //Create Default Page
+        XrgRdKpis::instance()->xrgTemplatePageInstance()->xrgCreateDefaultPage();
+    }
+
+    /**
      * Create Tables to the DB if not exist on plugin activation hook
      *
      * @since    0.1
      * @access   public
-     * @return void
+     * @return   void
      */
 
     public function xrgCreateTable(): void
@@ -109,7 +127,7 @@ class XrgGeneralSettings
      *
      * @since    0.1
      * @access   public
-     * @return void
+     * @return   void
      */
     public function xrgCreateAdminMenu(): void
     {
@@ -122,7 +140,7 @@ class XrgGeneralSettings
      *
      * @since    0.1
      * @access   public
-     * @return void
+     * @return   void
      */
     public function xrgRegionsForm(): void
     {
@@ -197,7 +215,7 @@ class XrgGeneralSettings
      *
      * @since    0.1
      * @access   public
-     * @return void
+     * @return   void
      */
     public function xrgRegistersettings(): void
     {
@@ -211,7 +229,7 @@ class XrgGeneralSettings
      *
      * @since    0.1
      * @access   public
-     * @return void
+     * @return   void
      */
     public function xrgSectionText(): void
     {
@@ -223,8 +241,8 @@ class XrgGeneralSettings
      *
      * @since    0.1
      * @access   public
-     * @param $actions array containing default action links
-     * @return array 
+     * @param   $actions array containing default action links
+     * @return   array
      */
     public function xrgSettingsActionLink(array $actions): array
     {

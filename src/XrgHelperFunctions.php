@@ -164,4 +164,5 @@ final class XrgHelperFunctions
 
         return $staffCount;
     }
+
 }

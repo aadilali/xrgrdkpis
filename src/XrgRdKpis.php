@@ -50,6 +50,9 @@ class XrgRdKpis
 
         // Initialize General Settings Class
         $this->xrgGeneralInstance();
+
+        // Load XrgTemplatePage intance
+        $this->xrgTemplatePageInstance()->xrgHandleHooks();
     }
 
     /**
@@ -104,5 +107,17 @@ class XrgRdKpis
     {
         $generalSettings = new XrgGeneralSettings();
         $generalSettings->xrgHandleHooks();
+    }
+
+    /**
+     * Get XrgTemplatePage instances
+     *
+     * @since    0.1
+     * @access   public
+     * @return XrgTemplatePage
+     */
+    public function xrgTemplatePageInstance(): XrgTemplatePage
+    {
+        return new XrgTemplatePage();
     }
 }
