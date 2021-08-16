@@ -165,4 +165,26 @@ final class XrgHelperFunctions
         return $staffCount;
     }
 
+    /**
+     * Return user status, login with GM or Admin Role
+     * @since    0.1
+     * @access   public
+     */ 
+    public static function xrgIsUserAllowed()
+    {
+        
+        $roles = [];
+
+        if( is_user_logged_in() ) {
+
+           $user = wp_get_current_user();
+           $roles = ( array ) $user->roles;
+           if(in_array('administrator', $roles) || in_array('general-manager', $roles)) {
+               return true;
+            }
+        } 
+
+        return false;
+    }
+
 }

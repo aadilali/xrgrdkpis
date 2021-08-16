@@ -26,10 +26,11 @@ class XrgTemplatePage
      */
     public function xrgHandleHooks(): void
     {
-        // Add shortcode to load default template [xrg-regions-list]
-        add_shortcode('xrg-regions-list', [$this, 'xrgRegionsList']);
-
+        // Template Include hook to load template
         add_filter('template_include', [$this, 'xrgLoadTemplate'], 99);
+
+        // Check user logged in or not
+        add_action('xrg-unauthorized-redirect', [$this, 'xrgIsLoggedIn']);
     }
 
     /**
@@ -62,7 +63,14 @@ class XrgTemplatePage
         return apply_filters( 'xrg_locate_template', $template, $templateName, $defaultPath );
     }
 
-    
+    /**
+    * Load specified template
+    *
+    * @since    0.1
+    * @access   public
+    * @param   string  $template template name to search in themes then plugin
+    * @return   string
+    */
     public function xrgLoadTemplate($template)
     {
         if (is_page('xrg-regions-list')) {
@@ -81,33 +89,7 @@ class XrgTemplatePage
             }
         }
 
-    return $template;
-}
-
-    /**
-     * Load Regions list template through shortcode
-     *
-     * from the /templates/ folder.
-     *
-     * @since    0.1
-     * @access   public
-     * @return   string
-     */
-    public function xrgRegionsList(): string
-    {
-        // $templateFile = $this->xrgLocateTemplate('xrg-regions-list-tpl.php');
-
-        // try {
-        //     if ( ! file_exists( $templateFile ) ) {
-        //         throw new \Exception('File template does not exist!');
-        //     }
-        // } catch (\Exception $error) {
-        //     return $error->getMessage();
-        // }
-
-        // // Load template file
-        // load_template($templateFile);
-        return 'THIS IS TEST PAGE';
+        return $template;
     }
 
     /**
@@ -164,6 +146,25 @@ class XrgTemplatePage
         
         // Create the post of type page
         wp_insert_post( $pageDetails );
+    }
+
+    /**
+     * Redirect no logged-in users to login page
+     * 
+     *
+     * @since    0.1
+     * @access   public
+     * @return   void
+     */
+    public function xrgIsLoggedIn(): void
+    {
+        $redirectLink = esc_url(site_url('/xrg-regions-list'));
+
+        if(!is_user_logged_in()) {
+            // Redirect to login page
+            wp_safe_redirect( '/wp-login.php?redirect_to=' . $redirectLink);
+            exit;
+        }
     }
 
 }

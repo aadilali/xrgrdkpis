@@ -396,3 +396,14 @@ span.full-width.input-description {
     font-size: 12px;
     color: #333;
 }
+
+/*  XRG REGIONS LIST PAGE  */
+.xrg-action-link {
+    width: 32px;
+}
+.xrg-action-link svg path {
+    fill: #12627B !important;
+}
+.xrg-action-link:hover > svg path {
+    fill: #B9500B !important;
+}
