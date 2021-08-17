@@ -3,11 +3,27 @@
 use XRG\RD\XrgRdKpis;
 use XRG\RD\XrgHelperFunctions;
 
+// Is region valid
+if(isset($_GET['region'])) {
+    //Check regions name is store in DB
+    if(! XrgHelperFunctions::xrgIsValidRegion($_GET['region'])) {
+        wp_redirect( site_url('/xrg-regions-list'));
+        exit;
+   }
+   $regionName = $_GET['region'];
+}
+
+// Is region available
+if(! isset($_GET['region'])) {
+    wp_redirect( site_url('/xrg-regions-list'));
+    exit;
+}
+
 // Action to download File
 if(isset($_GET['gen-sheet']) && $_GET['gen-sheet'] == 1) {
-    XrgRdKpis::instance()->xrgLoadSpreadSheet()->xrgGenerateSpreadSheet('ASantana');
+    XrgRdKpis::instance()->xrgLoadSpreadSheet()->xrgGenerateSpreadSheet($regionName);
 
-    $file =  XRG_PLUGIN_PATH . 'data/ASantana.xlsx';
+    $file =  XRG_PLUGIN_PATH . 'data/' . $regionName . '.xlsx';
     if (file_exists($file)) {
         header('Content-Description: File Transfer');
         header('Content-Type: application/octet-stream');
@@ -32,7 +48,7 @@ foreach ($clonedOriginal->getRowIterator() as $rowIndex => $row) {
     $cellIterator = $row->getCellIterator('M');
     $cellIterator->setIterateOnlyExistingCells(TRUE);
     foreach ($cellIterator as $key => $cell) {
-        if($cell->getValue() === 'ASantana') {
+        if($cell->getValue() === $regionName) {
            $loc = XrgHelperFunctions::xrgFormatArrayKeys($clonedOriginal->getCell('L' . $rowIndex)->getValue());
            $staffingParHave[$loc][] = $clonedOriginal->getCell('O' . $rowIndex)->getValue();
         }
@@ -43,9 +59,9 @@ $originalFile->disconnectWorksheets();
 unset($originalFile);
 
 // Get data from DB class
-$sheetData = XrgRdKpis::instance()->xrgDBInstance()->xrgGetRegionalData( 'ASantana' );
+$sheetData = XrgRdKpis::instance()->xrgDBInstance()->xrgGetRegionalData($regionName);
 // Get data from DB class
-$stafffingData = XrgRdKpis::instance()->xrgDBInstance()->xrgStaffingParsData( 'ASantana' );
+$stafffingData = XrgRdKpis::instance()->xrgDBInstance()->xrgStaffingParsData($regionName);
 $stafffingData = unserialize($stafffingData->staffing_data);
 
 $staffingPars = [
@@ -64,7 +80,7 @@ get_header();
         <!--  DOWNLOAD FILE LINK  -->
     <?php if($sheetData) : ?>
         <div class="btn-container button">
-            <a href="?gen-sheet=1" class="btn">Download File</a>
+            <a href="?gen-sheet=1&region=<?php echo esc_attr($regionName); ?>" class="btn">Download File</a>
         </div>
         <!--  Create Period's Tabs  -->
         <?php 
@@ -602,7 +618,7 @@ get_header();
         </div>
         <?php endforeach; ?>
         <!-- TABS CONTENT FOR STAFFING PARS REGIONAL TOTAL -->
-        <div id="ASantana" class="period-tab-content">
+        <div id="<?php echo esc_attr($regionName); ?>" class="period-tab-content">
             <div class="xrg-table-container">
                 <!-- Main Table  -->
                 <table class="main-table-wrapper">
@@ -614,7 +630,7 @@ get_header();
                                         <th colspan="5"></th>
                                     </tr>
                                     <tr>
-                                        <th>ASantana</th>
+                                        <th><?php echo esc_html($regionName); ?></th>
                                         <th>Have</th>
                                         <th>In Training</th>
                                         <th>Par</th>
@@ -790,7 +806,7 @@ get_header();
             <?php endforeach; ?>
             <!--  Regional Total Tab  -->
             <?php if(!empty($regionalTotal)): ?>
-                <button class="periods-tab view-template-tabs" data-period-id="ASantana" >ASantana</button>
+                <button class="periods-tab view-template-tabs" data-period-id="<?php echo esc_attr($regionName); ?>" ><?php echo esc_html($regionName); ?></button>
             <?php endif; ?>
         <?php
             foreach($stafffingData['xrg_locations'] as $staffObj) : 

@@ -5,42 +5,58 @@ use XRG\RD\XrgHelperFunctions;
 
 // KPIs Form Data
 if(isset($_POST['xrg_kpis_data_submit']) && $_POST['xrg_kpis_data_submit'] === 'SAVE') {
-    
     //Verify Nounce
     if ( isset( $_POST['xrg_verify_kpis'] ) || wp_verify_nonce( $_POST['xrg_verify_kpis'], 'xrg_verify_kpis_data' ) ) {
-        
         unset( $_POST['xrg_kpis_data_submit'] );
         XrgRdKpis::instance()->xrgDBInstance()->xrgSaveDataToDB($_POST);
         wp_redirect( site_url('/rd-view-sheet'));
+        exit;
     }
 }
 
 // Labor Form Data
 if(isset($_POST['xrg_labor_data_submit']) && $_POST['xrg_labor_data_submit'] === 'SAVE') {
-   
      //Verify Nounce
      if ( isset( $_POST['xrg_verify_labor'] ) || wp_verify_nonce( $_POST['xrg_verify_labor'], 'xrg_verify_labor_data' ) ) {
-       
         unset( $_POST['xrg_labor_data_submit'] );
         XrgRdKpis::instance()->xrgDBInstance()->xrgSaveDataToDB($_POST);
         wp_redirect( site_url('/rd-view-sheet'));
+        exit;
     }
 }
 
 // Staffing Pars Data
 if(isset($_POST['xrg_staffing_pars_data_submit']) && $_POST['xrg_staffing_pars_data_submit'] === 'SAVE') {
-   
     //Verify Nounce
     if ( isset( $_POST['xrg_verify_staffing_pars'] ) || wp_verify_nonce( $_POST['xrg_verify_staffing_pars'], 'xrg_verify_staffing_pars_data' ) ) {
-      
        unset( $_POST['xrg_staffing_pars_data_submit'] );
        XrgRdKpis::instance()->xrgDBInstance()->xrgSaveStaffingToDB($_POST);
        wp_redirect( site_url('/rd-view-sheet'));
+       exit;
    }
 }
 
-// Locations in a region
-$regionLocations = ['Huntington Beach', 'Anaheim', 'Irvine', 'Yorba Linda', 'Cypress'];
+// Is region valid
+if(isset($_GET['region'])) {
+    //Check regions name is store in DB
+    if(! XrgHelperFunctions::xrgIsValidRegion($_GET['region'])) {
+        wp_redirect( site_url('/xrg-regions-list'));
+        exit;
+   }
+
+   $regionName = $_GET['region'];
+   
+   // Locations in a region
+   $regionLocations = XrgHelperFunctions::xrgRegionLocations($regionName);
+}
+
+// Is region available
+if(! isset($_GET['region'])) {
+    wp_redirect( site_url('/xrg-regions-list'));
+    exit;
+}
+
+//$regionLocations = ['Huntington Beach', 'Anaheim', 'Irvine', 'Yorba Linda', 'Cypress'];
 
 // Months against periods
 $periodDetails = ['Period 1', 'Period 2', 'Period 3', 'Period 4', 'Period 5', 'Period 6', 'Period 7', 'Period 8', 'Period 9', 'Period 10', 'Period 11', 'Period 12'];
@@ -65,7 +81,7 @@ get_header();
         <div id="kpis_data_form" class="period-tab-content">
             <h2>KPIs DATA FORM</h2>
             <form method="post" action="" id="kpi_sheet">
-                <input type="hidden" name="xrg_region" value="ASantana" />
+                <input type="hidden" name="xrg_region" value="<?php echo esc_attr($regionName); ?>" />
                 <input type="hidden" name="xrg_data_type" value="kpis" />
                 <?php wp_nonce_field( 'xrg_verify_kpis_data', 'xrg_verify_kpis' ); ?>
                 <div class="flex-body">
@@ -214,7 +230,7 @@ get_header();
         <div id="labor_data_form" class="period-tab-content">
             <h2>LABOR FORECAST DATA FORM</h2>
             <form method="post" action="" id="labor_sheet">
-                <input type="hidden" name="xrg_region" value="ASantana" />
+                <input type="hidden" name="xrg_region" value="<?php echo esc_attr($regionName); ?>" />
                 <input type="hidden" name="xrg_data_type" value="labor" />
                 <?php wp_nonce_field( 'xrg_verify_labor_data', 'xrg_verify_labor' ); ?>
                 <div class="flex-body">
@@ -324,7 +340,7 @@ get_header();
         <div id="staffing_pars_data_form" class="period-tab-content">
             <h2>STAFFING PARS FORM</h2>
             <form method="post" action="" id="staffing_pars_sheet">
-                <input type="hidden" name="xrg_region" value="ASantana" />
+                <input type="hidden" name="xrg_region" value="<?php echo esc_attr($regionName); ?>" />
                 <?php wp_nonce_field( 'xrg_verify_staffing_pars_data', 'xrg_verify_staffing_pars' ); ?>
                 
                 <?php foreach($regionLocations as $location) : ?>

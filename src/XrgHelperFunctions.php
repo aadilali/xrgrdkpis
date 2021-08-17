@@ -169,22 +169,64 @@ final class XrgHelperFunctions
      * Return user status, login with GM or Admin Role
      * @since    0.1
      * @access   public
+     * @return   bool
      */ 
-    public static function xrgIsUserAllowed()
+    public static function xrgIsUserAllowed(): bool
     {
-        
         $roles = [];
-
         if( is_user_logged_in() ) {
-
            $user = wp_get_current_user();
            $roles = ( array ) $user->roles;
            if(in_array('administrator', $roles) || in_array('general-manager', $roles)) {
-               return true;
+               return TRUE;
             }
         } 
 
-        return false;
+        return FALSE;
+    }
+
+    /**
+     * Return true if region found in DB
+     * @since    0.1
+     * @access   public
+     * @param    string $regionName  Region name to be matched
+     * @return   bool
+     */ 
+    public static function xrgIsValidRegion(string $regionName): bool
+    {
+        $isValidRegion = FALSE;
+        $regionalData = get_option('xrg_regional_data');
+
+        foreach($regionalData as $region) {
+            if($regionName === $region['region_name']) {
+                $isValidRegion = TRUE;
+                break;
+            }
+        }
+
+        return $isValidRegion;
+    }
+
+    /**
+     * Return true if region found in DB
+     * @since    0.1
+     * @access   public
+     * @param    string $regionName  Region name to be matched
+     * @return   array   return locations under given region name as an array
+     */
+    public static function xrgRegionLocations(string $regionName): array
+    {
+        $locations = [];
+        $regionalData = get_option('xrg_regional_data');
+
+        foreach($regionalData as $region) {
+            if($regionName === $region['region_name']) {
+                $locations = $region['locations'];
+                break;
+            }
+        }
+
+        return $locations;
     }
 
 }

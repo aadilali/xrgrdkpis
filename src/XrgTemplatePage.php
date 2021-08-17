@@ -138,7 +138,7 @@ class XrgTemplatePage
         // Create new page
         $pageDetails = [
             'post_title'    => 'XRG Regions List',
-            'post_content'  => '[xrg-regions-list]',
+            'post_content'  => '',
             'post_status'   => 'publish',
             'post_author'   => 1,
             'post_type' => 'page'
