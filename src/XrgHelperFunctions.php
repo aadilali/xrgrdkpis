@@ -229,4 +229,17 @@ final class XrgHelperFunctions
         return $locations;
     }
 
+    /**
+     * Load svg content from given location
+     * @since    0.1
+     * @access   public
+     * @param    string $svgPath  SVG file page to be loaded
+     * @return   string
+     */
+    public static function xrgSvgLoader(string $svgPath): string
+    {
+        $svgContent = file_get_contents($svgPath);
+        return $svgContent;
+    }
+
 }

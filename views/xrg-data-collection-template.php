@@ -156,71 +156,73 @@ get_header();
                         <span class="heading_text">Training Weekly $ Budget</span> 
                     </div>
                 </div>
-                <?php foreach($regionLocations as $location) : ?>
-                <div class="flex-body">
-                    <div class="flex-col-form">
-                        <span class="field_val">
-                            <input type="text" name="xrg_locations[]" value="<?php echo $location; ?>" readonly />
-                        </span>
+                <div id='kpis_data_container'>
+                    <?php foreach($regionLocations as $location) : ?>
+                    <div class="flex-body">
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="xrg_locations[]" value="<?php echo $location; ?>" readonly />
+                            </span>
+                        </div>
+                        <?php  $location = XrgHelperFunctions::xrgFormatArrayKeys($location); ?>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="<?php echo $location; ?>[net_sales_wtd]" />
+                            </span>
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="<?php echo $location; ?>[var_bgt_sale]" />
+                            </span> 
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="<?php echo $location; ?>[net_profit]" />
+                            </span> 
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="<?php echo $location; ?>[var_bgt_net_profit]" />
+                            </span> 
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="<?php echo $location; ?>[theo_food_var]" />
+                            </span>
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="<?php echo $location; ?>[theo_liq_var]" />
+                            </span>
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="<?php echo $location; ?>[end_food_inv]" />
+                            </span>
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="<?php echo $location; ?>[end_liq_inv]" />
+                            </span>
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="<?php echo $location; ?>[theo_labor_wtd]" />
+                            </span>
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="<?php echo $location; ?>[training_pay_wtd]" />
+                            </span>
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="<?php echo $location; ?>[training_weekly_bgt]" />
+                            </span>
+                        </div>
                     </div>
-                    <?php  $location = XrgHelperFunctions::xrgFormatArrayKeys($location); ?>
-                    <div class="flex-col-form">
-                        <span class="field_val">
-                            <input type="text" name="<?php echo $location; ?>[net_sales_wtd]" />
-                        </span>
-                    </div>
-                    <div class="flex-col-form">
-                        <span class="field_val">
-                            <input type="text" name="<?php echo $location; ?>[var_bgt_sale]" />
-                        </span> 
-                    </div>
-                    <div class="flex-col-form">
-                        <span class="field_val">
-                            <input type="text" name="<?php echo $location; ?>[net_profit]" />
-                        </span> 
-                    </div>
-                    <div class="flex-col-form">
-                        <span class="field_val">
-                            <input type="text" name="<?php echo $location; ?>[var_bgt_net_profit]" />
-                        </span> 
-                    </div>
-                    <div class="flex-col-form">
-                        <span class="field_val">
-                            <input type="text" name="<?php echo $location; ?>[theo_food_var]" />
-                        </span>
-                    </div>
-                    <div class="flex-col-form">
-                        <span class="field_val">
-                            <input type="text" name="<?php echo $location; ?>[theo_liq_var]" />
-                        </span>
-                    </div>
-                    <div class="flex-col-form">
-                        <span class="field_val">
-                            <input type="text" name="<?php echo $location; ?>[end_food_inv]" />
-                        </span>
-                    </div>
-                    <div class="flex-col-form">
-                        <span class="field_val">
-                            <input type="text" name="<?php echo $location; ?>[end_liq_inv]" />
-                        </span>
-                    </div>
-                    <div class="flex-col-form">
-                        <span class="field_val">
-                            <input type="text" name="<?php echo $location; ?>[theo_labor_wtd]" />
-                        </span>
-                    </div>
-                    <div class="flex-col-form">
-                        <span class="field_val">
-                            <input type="text" name="<?php echo $location; ?>[training_pay_wtd]" />
-                        </span>
-                    </div>
-                    <div class="flex-col-form">
-                        <span class="field_val">
-                            <input type="text" name="<?php echo $location; ?>[training_weekly_bgt]" />
-                        </span>
-                    </div>
+                    <?php endforeach; ?>
                 </div>
-                <?php endforeach; ?>
                 <div class="flex-button-body">
                     <div class="flex-col-form border-none"><input type="submit" id="save_record" class="btn" name="xrg_kpis_data_submit" value="SAVE" /></div>
                 </div>
@@ -290,46 +292,48 @@ get_header();
                         <span class="heading_text">Budgeted Shift Leader Hours</span> 
                     </div>
                 </div>
-                <?php foreach($regionLocations as $location) : ?>
-                <div class="flex-body">
-                    <div class="flex-col-form">
-                        <span class="field_val">
-                            <input type="text" name="xrg_locations[]" value="<?php echo $location; ?>" readonly />
-                        </span>
+                <div id="labor_data_container">
+                    <?php foreach($regionLocations as $location) : ?>
+                    <div class="flex-body">
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="xrg_locations[]" value="<?php echo $location; ?>" readonly />
+                            </span>
+                        </div>
+                        <?php  $location = XrgHelperFunctions::xrgFormatArrayKeys($location); ?>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="<?php echo $location; ?>[forecasted_sales]" />
+                            </span>
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="<?php echo $location; ?>[forecasted_labor]" />
+                            </span> 
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="<?php echo $location; ?>[budgeted_labor]" />
+                            </span> 
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="<?php echo $location; ?>[theo_labor]" />
+                            </span> 
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="<?php echo $location; ?>[scheduled_leader_hours]" />
+                            </span>
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="<?php echo $location; ?>[budgeted_leader_hours]" />
+                            </span>
+                        </div>
                     </div>
-                    <?php  $location = XrgHelperFunctions::xrgFormatArrayKeys($location); ?>
-                    <div class="flex-col-form">
-                        <span class="field_val">
-                            <input type="text" name="<?php echo $location; ?>[forecasted_sales]" />
-                        </span>
-                    </div>
-                    <div class="flex-col-form">
-                        <span class="field_val">
-                            <input type="text" name="<?php echo $location; ?>[forecasted_labor]" />
-                        </span> 
-                    </div>
-                    <div class="flex-col-form">
-                        <span class="field_val">
-                            <input type="text" name="<?php echo $location; ?>[budgeted_labor]" />
-                        </span> 
-                    </div>
-                    <div class="flex-col-form">
-                        <span class="field_val">
-                            <input type="text" name="<?php echo $location; ?>[theo_labor]" />
-                        </span> 
-                    </div>
-                    <div class="flex-col-form">
-                        <span class="field_val">
-                            <input type="text" name="<?php echo $location; ?>[scheduled_leader_hours]" />
-                        </span>
-                    </div>
-                    <div class="flex-col-form">
-                        <span class="field_val">
-                            <input type="text" name="<?php echo $location; ?>[budgeted_leader_hours]" />
-                        </span>
-                    </div>
+                    <?php endforeach; ?>
                 </div>
-                <?php endforeach; ?>
                 <div class="flex-button-body">
                     <div class="flex-col-form border-none"><input type="submit" id="save_record" class="btn" name="xrg_labor_data_submit" value="SAVE" /></div>
                 </div>
@@ -541,6 +545,14 @@ get_header();
             <button class="periods-tab entry-template-tabs" data-period-id="staffing_pars_data_form" >Staffing Pars</button>
         </div>
 
+    </div>
+</div>
+<div id="xrg_overlay" class="xrg-overlay">
+    <div class="loader_container">
+        <span>
+            <?php echo XrgHelperFunctions::xrgSvgLoader(XRG_PLUGIN_PATH . 'assets/imgs/loader.svg'); ?>
+            Please Wait...
+        </span>
     </div>
 </div>
 <?php

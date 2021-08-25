@@ -43,6 +43,11 @@ class XrgGeneralSettings
         // Add action link 'Settings' under plugin name on plugins list page
         add_filter('plugin_action_links_' . XRG_PLUGIN_BASE_NAME, [$this, 'xrgSettingsActionLink']);
 
+        // Load KPIs existing data from DB against Period and Week number
+        add_action( 'wp_ajax_xrg_kpis_data', [$this, 'xrgKpisData']);
+
+        // Load Labor forecast existing data from DB against Period and Week number
+        add_action( 'wp_ajax_xrg_labor_data', [$this, 'xrgLaborData']);
     }
 
     /**
@@ -103,11 +108,13 @@ class XrgGeneralSettings
      * Enqueue scripts and styles for Front End
     */
     public function xrgLoadScripts() {
-        wp_register_style( 'xrg-rd-kpis', XRG_PLUGIN_URI.'assets/css/xrg-rd-kpis-style.css' );
-        wp_enqueue_style( 'xrg-rd-kpis' );
+        wp_register_style('xrg-rd-kpis', XRG_PLUGIN_URI.'assets/css/xrg-rd-kpis-style.css');
+        wp_enqueue_style('xrg-rd-kpis');
 
         wp_register_script('xrg-rd-kpis-main', XRG_PLUGIN_URI.'assets/js/xrg-rd-kpis-main.js', ['jquery'], '0.1', true);
-        wp_enqueue_script( 'xrg-rd-kpis-main' );
+        wp_enqueue_script('xrg-rd-kpis-main');
+        wp_localize_script('xrg-rd-kpis-main', 'xrgMainObj', ['ajaxURL' => admin_url('admin-ajax.php')]);
+
     }
 
     /**
@@ -252,5 +259,183 @@ class XrgGeneralSettings
 
         return array_merge( $actions, $xrgLink );
     }
+
+    /**
+     * Get Kpis Data from back-end and send as response
+     *
+     * @since    0.1
+     * @access   public
+     * @return   void
+     */
+    public function xrgKpisData(): void
+    {
+        $kpisData = XrgRdKpis::instance()->xrgDBInstance()->xrgGetWeeklyData($_POST['xrg_period'], $_POST['xrg_region']);
+
+        if(empty($kpisData)) {
+            $response = array('status' => true, 'data_status' => false);
+            wp_send_json($response, '200');
+        }
+
+        $xrgWeek = XrgHelperFunctions::xrgFormatArrayKeys($_POST['xrg_week']);
+        $kpisData = unserialize($kpisData->weekly_kpis_data);
+
+        if(! array_key_exists($xrgWeek, $kpisData)) {
+            $response = array('status' => true, 'data_status' => false);
+            wp_send_json($response, '200');
+        }
+
+        // Generating HTML response
+        $weeklyData = $kpisData[$xrgWeek];
+        $responseHTML = '';
+
+        foreach($weeklyData['xrg_locations'] as $location) {
+
+            $responseHTML .= '<div class="flex-body">
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="xrg_locations[]" value="' . $location . '" readonly />
+                            </span>
+                        </div>';
+
+                        $location = XrgHelperFunctions::xrgFormatArrayKeys($location);
+
+                        $responseHTML .= '<div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="' . $location . '[net_sales_wtd]" value="' . $weeklyData[$location]['net_sales_wtd'] . '" />
+                            </span>
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="' . $location . '[var_bgt_sale]" value="' . $weeklyData[$location]['var_bgt_sale'] . '" />
+                            </span> 
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="' . $location . '[net_profit]" value="' . $weeklyData[$location]['net_profit'] . '" />
+                            </span> 
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="' . $location . '[var_bgt_net_profit]" value="' . $weeklyData[$location]['var_bgt_net_profit'] . '" />
+                            </span> 
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="' . $location . '[theo_food_var]" value="' . $weeklyData[$location]['theo_food_var'] . '" />
+                            </span>
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="' . $location . '[theo_liq_var]" value="' . $weeklyData[$location]['theo_liq_var'] . '" />
+                            </span>
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="' . $location . '[end_food_inv]" value="' . $weeklyData[$location]['end_food_inv'] . '" />
+                            </span>
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="' . $location . '[end_liq_inv]" value="' . $weeklyData[$location]['end_liq_inv'] . '" />
+                            </span>
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="' . $location . '[theo_labor_wtd]" value="' . $weeklyData[$location]['theo_labor_wtd'] . '" />
+                            </span>
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="' . $location . '[training_pay_wtd]" value="' . $weeklyData[$location]['training_pay_wtd'] . '" />
+                            </span>
+                        </div>
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="' . $location . '[training_weekly_bgt]" value="' . $weeklyData[$location]['training_weekly_bgt'] . '" />
+                            </span>
+                        </div>
+                    </div>';
+        }
+
+        $response = array('status' => true, 'data_status' => true, 'res_data' => $responseHTML);
+        wp_send_json($response, '200');
+    }
+
+    /**
+     * Get Labor forecast data from back-end and send as response
+     *
+     * @since    0.1
+     * @access   public
+     * @return   void
+     */
+    public function xrgLaborData(): void
+    {
+        $laborData = XrgRdKpis::instance()->xrgDBInstance()->xrgGetWeeklyData($_POST['xrg_period'], $_POST['xrg_region']);
+
+        if(empty($laborData)) {
+            $response = array('status' => true, 'data_status' => false);
+            wp_send_json($response, '200');
+        }
+
+        $xrgWeek = XrgHelperFunctions::xrgFormatArrayKeys($_POST['xrg_week']);
+        $laborData = unserialize($laborData->weekly_labor_data);
+
+        if(! array_key_exists($xrgWeek, $laborData)) {
+            $response = array('status' => true, 'data_status' => false);
+            wp_send_json($response, '200');
+        }
+
+        // Generating HTML response
+        $weeklyData = $laborData[$xrgWeek];
+        $responseHTML = '';
+
+        foreach($weeklyData['xrg_locations'] as $location) {
+
+            $responseHTML .= '<div class="flex-body">
+                        <div class="flex-col-form">
+                            <span class="field_val">
+                                <input type="text" name="xrg_locations[]" value="' . $location . '" readonly />
+                            </span>
+                        </div>';
+
+                        $location = XrgHelperFunctions::xrgFormatArrayKeys($location);
+
+                        $responseHTML .= '<div class="flex-col-form">
+                        <span class="field_val">
+                            <input type="text" name="' . $location . '[forecasted_sales]" value="' . $weeklyData[$location]['forecasted_sales'] . '" />
+                        </span>
+                    </div>
+                    <div class="flex-col-form">
+                        <span class="field_val">
+                            <input type="text" name="' . $location . '[forecasted_labor]" value="' . $weeklyData[$location]['forecasted_labor'] . '" />
+                        </span> 
+                    </div>
+                    <div class="flex-col-form">
+                        <span class="field_val">
+                            <input type="text" name="' . $location . '[budgeted_labor]" value="' . $weeklyData[$location]['budgeted_labor'] . '" />
+                        </span> 
+                    </div>
+                    <div class="flex-col-form">
+                        <span class="field_val">
+                            <input type="text" name="' . $location . '[theo_labor]" value="' . $weeklyData[$location]['theo_labor'] . '" />
+                        </span> 
+                    </div>
+                    <div class="flex-col-form">
+                        <span class="field_val">
+                            <input type="text" name="' . $location . '[scheduled_leader_hours]" value="' . $weeklyData[$location]['scheduled_leader_hours'] . '" />
+                        </span>
+                    </div>
+                    <div class="flex-col-form">
+                        <span class="field_val">
+                            <input type="text" name="' . $location . '[budgeted_leader_hours]" value="' . $weeklyData[$location]['budgeted_leader_hours'] . '" />
+                        </span>
+                    </div>
+                </div>';
+        }
+
+        $response = array('status' => true, 'data_status' => true, 'res_data' => $responseHTML);
+        wp_send_json($response, '200');
+    }
+
 
 }

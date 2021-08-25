@@ -407,3 +407,31 @@ span.full-width.input-description {
 .xrg-action-link:hover > svg path {
     fill: #B9500B !important;
 }
+
+/* Loader Section  */
+.xrg-overlay {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    vertical-align: middle;
+    top: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 111;
+    display: none;
+}
+.xrg-overlay .loader_container {
+    display: flex;
+    color: #12627B;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+.xrg-overlay .loader_container span {
+    background: #fff;
+    padding: 0px 10px;
+}
+.xrg-overlay .loader_container svg {
+    background: rgb(254, 254, 254, 0.5) !important;
+    display: inline-block !important;
+}
