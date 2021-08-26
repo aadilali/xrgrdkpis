@@ -2,6 +2,9 @@
     // Global variable for storing existing html
     var glbKpisHTML;
     var glbLaborHTML;
+    var glbStaffingHTML;
+    var staffTabFlag = true;
+
     // Function to display the Tabs content
     const displayTab = (thisObj) => {
         // Hide All tabs first
@@ -66,11 +69,37 @@
         });
     }
 
+    // Function to fecth data from DB using API if Exist
+    const getexistinStaff = region => {
+
+        // initiate loader on front-end screen
+        console.log('HERER ', xrgMainObj.ajaxURL);
+
+        // Get data using admin Ajax
+        $.ajax({
+            type : 'POST',
+            url : xrgMainObj.ajaxURL,
+            data : {action: 'xrg_staffing_data', 'xrg_region': region}
+        }).done( function(response) {
+            $('#xrg_overlay').css('display', 'none');
+            if(response.data_status) {
+                $('#staffing_data_container').html(response.res_data);
+                return;
+            }
+            // Else replace existing HTML
+            $('#staffing_data_container').html(glbStaffingHTML);
+        }).fail( function(response) {
+            $('#xrg_overlay').css('display', 'none');
+            console.log("response FAILED", response);
+        });
+    }
+
     $(document).ready(function () {
 
         // Store Kpis and labor HTML
         glbKpisHTML = $('#kpis_data_container').html();
         glbLaborHTML = $('#labor_data_container').html();
+        glbStaffingHTML = $('#staffing_data_container').html();
 
         // Bind All Tabs Link to click function
         $(document).on('click', '.periods-tab', function () {
@@ -140,6 +169,19 @@
                 $('#xrg_overlay').css('display', 'flex');
                 getexistinLabor(region, exPeriod, exWeek);
             }
+         });
+
+         $(document).on('click', '#staffing_tab', function() {
+
+            //Check Staffing Pars Data
+            
+            if(staffTabFlag) {
+                $('#xrg_overlay').css('display', 'flex');
+                region = $('#staffing_pars_sheet').find('input[name="xrg_region"').val();
+                
+                getexistinStaff(region);
+            }
+            staffTabFlag = false;
          });
  
     });

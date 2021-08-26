@@ -48,6 +48,9 @@ class XrgGeneralSettings
 
         // Load Labor forecast existing data from DB against Period and Week number
         add_action( 'wp_ajax_xrg_labor_data', [$this, 'xrgLaborData']);
+
+        // Load Staffing Pars existing data from DB against Region
+        add_action( 'wp_ajax_xrg_staffing_data', [$this, 'xrgStaffData']);
     }
 
     /**
@@ -437,5 +440,222 @@ class XrgGeneralSettings
         wp_send_json($response, '200');
     }
 
+    /**
+     * Get staffing pars data from back-end and send as response
+     *
+     * @since    0.1
+     * @access   public
+     * @return   void
+     */
+    public function xrgStaffData(): void
+    {
+        $staffingData = XrgRdKpis::instance()->xrgDBInstance()->xrgStaffingParsData($_POST['xrg_region']);
+        
+        // Staffing Pars Types
+        $staffingPars = [
+            'Server' => 'Servers', 'Cocktail' => 'Cocktail', 'Host' => 'Host',
+            'Bartender' => 'Bar', 'Busser/Runner' => 'Bus', 'Expo' => 'Expo',
+            'Line Cook' => 'Cook', 'Prep Cook' => 'Prep', 'Dish' => 'Dish'
+        ];
+
+        if(empty($staffingData)) {
+            $response = array('status' => true, 'data_status' => false);
+            wp_send_json($response, '200');
+        }
+
+        $staffingData = unserialize($staffingData->staffing_data);
+
+        // Generating HTML response
+        $responseHTML = '';
+
+        foreach($staffingData['xrg_locations'] as $location) {
+            $responseHTML .= '<div class="location-staffing-container">
+                    <div class="flex-col-form">
+                        <span class="field_val">
+                            <input type="text" class="location-name" name="xrg_locations[]" value="' . $location . '" readonly />
+                        </span>
+                    </div>';
+
+                    $location = XrgHelperFunctions::xrgFormatArrayKeys($location);
+
+                    foreach($staffingPars as $staffingPar) {
+                        $responseHTML .= '<div class="staffing-type-row">
+                            <div class="flex-head">
+                                <div class="flex-col-form-head">
+                                    <span class="heading_text"></span>
+                                </div>
+                                <div class="flex-col-form-head">
+                                    <span class="heading_text"></span>
+                                </div>
+                                <div class="flex-col-form-head">
+                                    <span class="heading_text">Mon</span>
+                                </div>
+                                <div class="flex-col-form-head">
+                                    <span class="heading_text">Tues</span> 
+                                </div>
+                                <div class="flex-col-form-head">
+                                    <span class="heading_text">Wed</span> 
+                                </div>
+                                <div class="flex-col-form-head">
+                                    <span class="heading_text">Thurs</span> 
+                                </div>
+                                <div class="flex-col-form-head">
+                                    <span class="heading_text">Fri</span> 
+                                </div>
+                                <div class="flex-col-form-head">
+                                    <span class="heading_text">Sat</span> 
+                                </div>
+                                <div class="flex-col-form-head">
+                                    <span class="heading_text">Sun</span> 
+                                </div>
+                            </div>
+
+                            <div class="flex-body">
+                                <div class="flex-body-left">
+                                    <div class="flex-col-form">
+                                        <span class="field_val staffing-par-head">
+                                            ' . $staffingPar . '
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="flex-body-right">
+                                    <div class="flex-body-right-content">
+                                        <!-- AM DATA -->
+                                        <div class="flex-col-form">
+                                            <span class="field_val">
+                                                am
+                                            </span>
+                                        </div>
+                                        <div class="flex-col-form">
+                                            <span class="field_val">
+                                                <input type="text" name="' . $location . '[' . $staffingPar . '][am][Mon]" value="' . $staffingData[$location][$staffingPar]['am']['Mon'] . '" />
+                                            </span>
+                                        </div>
+                                        <div class="flex-col-form">
+                                            <span class="field_val">
+                                                <input type="text" name="' . $location . '[' . $staffingPar . '][am][Tues]" value="' . $staffingData[$location][$staffingPar]['am']['Tues'] . '" />
+                                            </span>
+                                        </div>
+                                        <div class="flex-col-form">
+                                            <span class="field_val">
+                                                <input type="text" name="' . $location . '[' . $staffingPar . '][am][Wed]" value="' . $staffingData[$location][$staffingPar]['am']['Wed'] . '" />
+                                            </span>
+                                        </div>
+                                        <div class="flex-col-form">
+                                            <span class="field_val">
+                                                <input type="text" name="' . $location . '[' . $staffingPar . '][am][Thurs]" value="' . $staffingData[$location][$staffingPar]['am']['Thurs'] . '" />
+                                            </span>
+                                        </div>
+                                        <div class="flex-col-form">
+                                            <span class="field_val">
+                                                <input type="text" name="' . $location . '[' . $staffingPar . '][am][Fri]" value="' . $staffingData[$location][$staffingPar]['am']['Fri'] . '" />
+                                            </span>
+                                        </div>
+                                        <div class="flex-col-form">
+                                            <span class="field_val">
+                                                <input type="text" name="' . $location . '[' . $staffingPar . '][am][Sat]" value="' . $staffingData[$location][$staffingPar]['am']['Sat'] . '" />
+                                            </span>
+                                        </div>
+                                        <div class="flex-col-form">
+                                            <span class="field_val">
+                                                <input type="text" name="' . $location . '[' . $staffingPar . '][am][Sun]" value="' . $staffingData[$location][$staffingPar]['am']['Sun'] . '" />
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="flex-body-right-content">
+                                        <!-- PM DATA -->
+                                        <div class="flex-col-form">
+                                            <span class="field_val">
+                                                pm
+                                            </span>
+                                        </div>
+                                        <div class="flex-col-form">
+                                            <span class="field_val">
+                                                <input type="text" name="' . $location . '[' . $staffingPar . '][pm][Mon]" value="' . $staffingData[$location][$staffingPar]['pm']['Mon'] . '" />
+                                            </span>
+                                        </div>
+                                        <div class="flex-col-form">
+                                            <span class="field_val">
+                                                <input type="text" name="' . $location . '[' . $staffingPar . '][pm][Tues]" value="' . $staffingData[$location][$staffingPar]['pm']['Tues'] . '" />
+                                            </span>
+                                        </div>
+                                        <div class="flex-col-form">
+                                            <span class="field_val">
+                                                <input type="text" name="' . $location . '[' . $staffingPar . '][pm][Wed]" value="' . $staffingData[$location][$staffingPar]['pm']['Wed'] . '" />
+                                            </span>
+                                        </div>
+                                        <div class="flex-col-form">
+                                            <span class="field_val">
+                                                <input type="text" name="' . $location . '[' . $staffingPar . '][pm][Thurs]" value="' . $staffingData[$location][$staffingPar]['pm']['Thurs'] . '" />
+                                            </span>
+                                        </div>
+                                        <div class="flex-col-form">
+                                            <span class="field_val">
+                                                <input type="text" name="' . $location . '[' . $staffingPar . '][pm][Fri]" value="' . $staffingData[$location][$staffingPar]['pm']['Fri'] . '" />
+                                            </span>
+                                        </div>
+                                        <div class="flex-col-form">
+                                            <span class="field_val">
+                                                <input type="text" name="' . $location . '[' . $staffingPar . '][pm][Sat]" value="' . $staffingData[$location][$staffingPar]['pm']['Sat'] . '" />
+                                            </span>
+                                        </div>
+                                        <div class="flex-col-form">
+                                            <span class="field_val">
+                                                <input type="text" name="' . $location . '[' . $staffingPar . '][pm][Sun]" value="' . $staffingData[$location][$staffingPar]['pm']['Sun'] . '" />
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="flex-body-right-content">
+                                        <!-- Total Par Field -->
+                                        <div class="flex-col-form par-type-total-label">
+                                            <span class="field_label">
+                                                ' . $staffingPar . ' In Training
+                                            </span>
+                                        </div>
+                                        <div class="flex-col-form par-type-total-val">
+                                            <span class="field_val">
+                                                <input type="text" name="' . $location . '[' . $staffingPar . '][in_training]" value="' . $staffingData[$location][$staffingPar]['in_training'] . '" />
+                                            </span>
+                                        </div>
+                                        <div class="flex-col-form par-type-total-label">
+                                            <span class="field_label">
+                                                Total ' . $staffingPar . '
+                                            </span>
+                                        </div>
+                                        <div class="flex-col-form par-type-total-val">
+                                            <span class="field_val">
+                                                <input type="text" name="' . $location . '[' . $staffingPar . '][total]" value="' . $staffingData[$location][$staffingPar]['total'] . '" />
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>';
+                    }
+            $responseHTML .= '<div class="staffing-type-row">   <!--  Max Table to Seat  -->
+                    <div class="flex-body">
+                        <div class="flex-body-right">
+                            <div class="flex-body-right-content">
+                                <!-- AM DATA -->
+                                <div class="flex-col-form">
+                                    <span class="field_val" style="font-weight: bold;">
+                                        Max Table to Seat
+                                    </span>
+                                </div>
+                                <div class="flex-col-form" style="flex-grow: 10;">
+                                    <span class="field_val">
+                                        <input type="text" name="' . $location . '[max_tables]" value="' . $staffingData[$location]['max_tables'] . '" />
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>';
+        }
+
+        $response = array('status' => true, 'data_status' => true, 'res_data' => $responseHTML);
+        wp_send_json($response, '200');
+    }
 
 }
