@@ -10,6 +10,11 @@ $regionalData = get_option('xrg_regional_data');
 
 <div class="flex-container-locations">
     <div class="flex-head">
+        <div class="btn-container button">
+            <a href="<?php echo site_url('/rd-file-upload'); ?>" class="btn">Upload New Hire File</a>
+        </div>
+    </div>
+    <div class="flex-head">
         <div class="flex-col-form-head">
             <span class="heading_text">Region Name</span>
         </div>

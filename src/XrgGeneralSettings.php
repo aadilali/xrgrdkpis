@@ -476,7 +476,7 @@ class XrgGeneralSettings
                         </span>
                     </div>';
 
-                    $location = XrgHelperFunctions::xrgFormatArrayKeys($location);
+                    $location = XrgHelperFunctions::xrgFormatArrayKeys($location);  // Convert loctions name to readable key like Yorba Linda to yorba_linda
 
                     foreach($staffingPars as $staffingPar) {
                         $responseHTML .= '<div class="staffing-type-row">
